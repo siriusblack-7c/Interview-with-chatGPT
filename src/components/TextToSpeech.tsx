@@ -88,16 +88,32 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
     };
 
     const pause = () => {
+        console.log('Pause called:', {
+            speaking: speechSynthesis.speaking,
+            paused: speechSynthesis.paused
+        });
         if (speechSynthesis.speaking && !speechSynthesis.paused) {
             speechSynthesis.pause();
             setIsPaused(true);
+            onStateChange?.(true, isMuted);
+            console.log('Speech paused successfully');
+        } else {
+            console.log('Cannot pause: not speaking or already paused');
         }
     };
 
     const resume = () => {
+        console.log('Resume called:', {
+            speaking: speechSynthesis.speaking,
+            paused: speechSynthesis.paused
+        });
         if (speechSynthesis.paused) {
             speechSynthesis.resume();
             setIsPaused(false);
+            onStateChange?.(true, isMuted);
+            console.log('Speech resumed successfully');
+        } else {
+            console.log('Cannot resume: not paused');
         }
     };
 
@@ -110,16 +126,28 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
 
     const toggleMute = () => {
         const newMutedState = !isMuted;
+        console.log('Toggle mute:', {
+            currentMuted: isMuted,
+            newMuted: newMutedState,
+            isPlaying,
+            isPaused,
+            speechSynthesisSpeaking: speechSynthesis.speaking,
+            speechSynthesisPaused: speechSynthesis.paused
+        });
+
         setIsMuted(newMutedState);
 
-        if (newMutedState && isPlaying) {
+        if (newMutedState && isPlaying && !isPaused) {
             // Mute by pausing
+            console.log('Muting: pausing speech');
             pause();
         } else if (!newMutedState && isPaused) {
             // Unmute by resuming
+            console.log('Unmuting: resuming speech');
             resume();
         }
 
+        // Update state change with current playing state
         onStateChange?.(isPlaying, newMutedState);
     };
 
