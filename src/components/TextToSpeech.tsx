@@ -1,14 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Volume2, VolumeX, Play, Pause, RotateCcw } from 'lucide-react';
 
 interface TextToSpeechProps {
     text: string;
     autoPlay?: boolean;
+    onStateChange?: (isPlaying: boolean, isMuted: boolean) => void;
 }
 
-export default function TextToSpeech({ text, autoPlay = false }: TextToSpeechProps) {
+export interface TextToSpeechRef {
+    toggleMute: () => void;
+    stop: () => void;
+    speak: () => void;
+}
+
+const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, autoPlay = false, onStateChange }, ref) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
     const [isSupported, setIsSupported] = useState(false);
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [selectedVoice, setSelectedVoice] = useState<number>(0);
@@ -62,16 +70,19 @@ export default function TextToSpeech({ text, autoPlay = false }: TextToSpeechPro
         utterance.onstart = () => {
             setIsPlaying(true);
             setIsPaused(false);
+            onStateChange?.(true, isMuted);
         };
 
         utterance.onend = () => {
             setIsPlaying(false);
             setIsPaused(false);
+            onStateChange?.(false, isMuted);
         };
 
         utterance.onerror = () => {
             setIsPlaying(false);
             setIsPaused(false);
+            onStateChange?.(false, isMuted);
         };
 
         speechSynthesis.speak(utterance);
@@ -95,7 +106,30 @@ export default function TextToSpeech({ text, autoPlay = false }: TextToSpeechPro
         speechSynthesis.cancel();
         setIsPlaying(false);
         setIsPaused(false);
+        onStateChange?.(false, isMuted);
     };
+
+    const toggleMute = () => {
+        const newMutedState = !isMuted;
+        setIsMuted(newMutedState);
+
+        if (newMutedState && isPlaying) {
+            // Mute by pausing
+            pause();
+        } else if (!newMutedState && isPaused) {
+            // Unmute by resuming
+            resume();
+        }
+
+        onStateChange?.(isPlaying, newMutedState);
+    };
+
+    // Expose functions to parent component
+    useImperativeHandle(ref, () => ({
+        toggleMute,
+        stop,
+        speak
+    }));
 
     if (!isSupported) {
         return (
@@ -230,4 +264,8 @@ export default function TextToSpeech({ text, autoPlay = false }: TextToSpeechPro
             </div>
         </div>
     );
-}
+});
+
+TextToSpeech.displayName = 'TextToSpeech';
+
+export default TextToSpeech;

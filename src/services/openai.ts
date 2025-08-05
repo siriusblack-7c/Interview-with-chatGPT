@@ -17,7 +17,7 @@ class OpenAIService {
 
         this.config = {
             apiKey: envApiKey || storedApiKey || '',
-            model: import.meta.env.VITE_OPENAI_MODEL || 'gpt-3.5-turbo',
+            model: import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o-mini',
             maxTokens: parseInt(import.meta.env.VITE_OPENAI_MAX_TOKENS || '500')
         };
 
@@ -71,6 +71,7 @@ Guidelines:
 - Maintain a positive and professional tone
 - Tailor responses to common interview scenarios
 - Focus on technical skills, soft skills, and career growth
+- Don't ask me any questions, just answer the question
 
 Context: This is a practice interview session where the user is preparing for real interviews.`;
 

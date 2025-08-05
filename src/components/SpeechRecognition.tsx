@@ -1,16 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2 } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Square } from 'lucide-react';
 
 interface SpeechRecognitionProps {
     onQuestionDetected: (question: string) => void;
     isListening: boolean;
     onToggleListening: () => void;
+    onMuteResponse?: () => void;
+    onStopResponse?: () => void;
+    isResponsePlaying?: boolean;
+    isMuted?: boolean;
 }
 
 export default function SpeechRecognition({
     onQuestionDetected,
     isListening,
-    onToggleListening
+    onToggleListening,
+    onMuteResponse,
+    onStopResponse,
+    isResponsePlaying = false,
+    isMuted = false
 }: SpeechRecognitionProps) {
     const [transcript, setTranscript] = useState('');
     const [isSupported, setIsSupported] = useState(false);
@@ -91,27 +99,72 @@ export default function SpeechRecognition({
                     <Volume2 className="h-5 w-5 text-blue-600" />
                     Voice Input
                 </h3>
-                <button
-                    onClick={onToggleListening}
-                    className={`p-3 rounded-full transition-all duration-200 transform hover:scale-105 ${isListening
-                        ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/25'
-                        : 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                        }`}
-                >
-                    {isListening ? (
-                        <MicOff className="h-6 w-6" />
-                    ) : (
-                        <Mic className="h-6 w-6" />
+                <div className="flex items-center gap-2">
+                    {/* Response Control Buttons */}
+                    {(isResponsePlaying || isMuted) && (
+                        <>
+                            {onMuteResponse && (
+                                <button
+                                    onClick={onMuteResponse}
+                                    className={`p-2 rounded-lg transition-all duration-200 transform hover:scale-105 ${isMuted
+                                        ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25'
+                                        : 'bg-gray-500 hover:bg-gray-600 text-white shadow-lg shadow-gray-500/25'
+                                        }`}
+                                    title={isMuted ? 'Unmute Response' : 'Mute Response'}
+                                >
+                                    {isMuted ? (
+                                        <VolumeX className="h-4 w-4" />
+                                    ) : (
+                                        <Volume2 className="h-4 w-4" />
+                                    )}
+                                </button>
+                            )}
+                            {onStopResponse && isResponsePlaying && (
+                                <button
+                                    onClick={onStopResponse}
+                                    className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all duration-200 transform hover:scale-105 shadow-lg shadow-red-500/25"
+                                    title="Stop Response"
+                                >
+                                    <Square className="h-4 w-4" />
+                                </button>
+                            )}
+                        </>
                     )}
-                </button>
+
+                    {/* Microphone Button */}
+                    <button
+                        onClick={onToggleListening}
+                        className={`p-3 rounded-full transition-all duration-200 transform hover:scale-105 ${isListening
+                            ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/25'
+                            : 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                            }`}
+                        title={isListening ? 'Stop Listening' : 'Start Listening'}
+                    >
+                        {isListening ? (
+                            <MicOff className="h-6 w-6" />
+                        ) : (
+                            <Mic className="h-6 w-6" />
+                        )}
+                    </button>
+                </div>
             </div>
 
             <div className="space-y-3">
-                <div className={`flex items-center gap-2 text-sm ${isListening ? 'text-green-600' : 'text-gray-500'
-                    }`}>
-                    <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
-                        }`} />
-                    {isListening ? 'Listening for questions...' : 'Click microphone to start'}
+                <div className="flex items-center justify-between">
+                    <div className={`flex items-center gap-2 text-sm ${isListening ? 'text-green-600' : 'text-gray-500'}`}>
+                        <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                        {isListening ? 'Listening for questions...' : 'Click microphone to start'}
+                    </div>
+
+                    {/* Response Status */}
+                    {(isResponsePlaying || isMuted) && (
+                        <div className={`flex items-center gap-2 text-xs ${isMuted ? 'text-orange-600' : isResponsePlaying ? 'text-blue-600' : 'text-gray-500'
+                            }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${isMuted ? 'bg-orange-500' : isResponsePlaying ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'
+                                }`} />
+                            {isMuted ? 'Response muted' : isResponsePlaying ? 'Response playing' : 'Response ready'}
+                        </div>
+                    )}
                 </div>
 
                 {transcript && (

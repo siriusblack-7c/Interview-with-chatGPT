@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Briefcase, Settings, BarChart3, Zap } from 'lucide-react';
 import SpeechRecognition from './SpeechRecognition';
 import ResponseGenerator from './ResponseGenerator';
 import ConversationHistory from './ConversationHistory';
-import TextToSpeech from './TextToSpeech';
+import TextToSpeech, { type TextToSpeechRef } from './TextToSpeech';
 import OpenAIConfig from './OpenAIConfig';
 
 interface ConversationItem {
@@ -19,11 +19,15 @@ export default function InterviewDashboard() {
     const [currentResponse, setCurrentResponse] = useState('');
     const [conversations, setConversations] = useState<ConversationItem[]>([]);
     const [openaiConfigured, setOpenaiConfigured] = useState(false);
+    const [isResponsePlaying, setIsResponsePlaying] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
     const [sessionStats, setSessionStats] = useState({
         questionsAnswered: 0,
         avgResponseTime: 0,
         sessionDuration: 0
     });
+
+    const textToSpeechRef = useRef<TextToSpeechRef>(null);
 
     const handleQuestionDetected = useCallback((question: string) => {
         setCurrentQuestion(question);
@@ -70,6 +74,19 @@ export default function InterviewDashboard() {
             avgResponseTime: 0,
             sessionDuration: 0
         });
+    }, []);
+
+    const handleSpeechStateChange = useCallback((playing: boolean, muted: boolean) => {
+        setIsResponsePlaying(playing);
+        setIsMuted(muted);
+    }, []);
+
+    const handleMuteResponse = useCallback(() => {
+        textToSpeechRef.current?.toggleMute();
+    }, []);
+
+    const handleStopResponse = useCallback(() => {
+        textToSpeechRef.current?.stop();
     }, []);
 
     return (
@@ -123,6 +140,10 @@ export default function InterviewDashboard() {
                             onQuestionDetected={handleQuestionDetected}
                             isListening={isListening}
                             onToggleListening={handleToggleListening}
+                            onMuteResponse={handleMuteResponse}
+                            onStopResponse={handleStopResponse}
+                            isResponsePlaying={isResponsePlaying}
+                            isMuted={isMuted}
                         />
 
                         {/* OpenAI Configuration */}
@@ -137,8 +158,10 @@ export default function InterviewDashboard() {
 
                         {/* Text-to-Speech */}
                         <TextToSpeech
+                            ref={textToSpeechRef}
                             text={currentResponse}
                             autoPlay={false}
+                            onStateChange={handleSpeechStateChange}
                         />
                     </div>
 
