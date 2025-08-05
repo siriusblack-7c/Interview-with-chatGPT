@@ -158,11 +158,11 @@ export default function SpeechRecognition({
 
                     {/* Response Status */}
                     {(isResponsePlaying || isMuted) && (
-                        <div className={`flex items-center gap-2 text-xs ${isMuted ? 'text-orange-600' : isResponsePlaying ? 'text-blue-600' : 'text-gray-500'
+                        <div className={`flex items-center gap-2 text-xs ${isMuted ? 'text-orange-600' : isResponsePlaying ? 'text-green-600' : 'text-gray-500'
                             }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${isMuted ? 'bg-orange-500' : isResponsePlaying ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'
+                            <div className={`w-1.5 h-1.5 rounded-full ${isMuted ? 'bg-orange-500' : isResponsePlaying ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
                                 }`} />
-                            {isMuted ? 'Response muted' : isResponsePlaying ? 'Response playing' : 'Response ready'}
+                            {isMuted ? '🔇 Response muted' : isResponsePlaying ? '🔊 Speaking answer...' : 'Response ready'}
                         </div>
                     )}
                 </div>

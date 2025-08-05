@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Briefcase, Settings, BarChart3, Zap } from 'lucide-react';
+import { Briefcase, BarChart3, Zap } from 'lucide-react';
 import SpeechRecognition from './SpeechRecognition';
 import ResponseGenerator from './ResponseGenerator';
 import ConversationHistory from './ConversationHistory';
@@ -133,9 +133,9 @@ export default function InterviewDashboard() {
                                 </div>
                             </div>
 
-                            <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                            {/* <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
                                 <Settings className="h-5 w-5" />
-                            </button>
+                            </button> */}
                         </div>
                     </div>
                 </div>
@@ -156,6 +156,22 @@ export default function InterviewDashboard() {
                             isResponsePlaying={isResponsePlaying}
                             isMuted={isMuted}
                         />
+                        {/* Response Generator */}
+                        <ResponseGenerator
+                            question={currentQuestion}
+                            onResponseGenerated={handleResponseGenerated}
+                            openaiConfigured={openaiConfigured}
+                            resumeText={resumeText}
+                            jobDescription={jobDescription}
+                        />
+
+                        {/* Hidden Text-to-Speech for automatic playback */}
+                        <TextToSpeech
+                            ref={textToSpeechRef}
+                            text={currentResponse}
+                            autoPlay={true}
+                            onStateChange={handleSpeechStateChange}
+                        />
 
                         {/* Document Manager */}
                         <DocumentManager
@@ -168,22 +184,6 @@ export default function InterviewDashboard() {
                         {/* OpenAI Configuration */}
                         <OpenAIConfig onConfigChange={setOpenaiConfigured} />
 
-                        {/* Response Generator */}
-                        <ResponseGenerator
-                            question={currentQuestion}
-                            onResponseGenerated={handleResponseGenerated}
-                            openaiConfigured={openaiConfigured}
-                            resumeText={resumeText}
-                            jobDescription={jobDescription}
-                        />
-
-                        {/* Text-to-Speech */}
-                        <TextToSpeech
-                            ref={textToSpeechRef}
-                            text={currentResponse}
-                            autoPlay={false}
-                            onStateChange={handleSpeechStateChange}
-                        />
                     </div>
 
                     {/* Right Column */}
@@ -201,7 +201,8 @@ export default function InterviewDashboard() {
                                 <p>• Upload your resume for personalized responses</p>
                                 <p>• Add job description (file or text) for role-specific answers</p>
                                 <p>• Use the microphone to practice with real voice input</p>
-                                <p>• Listen to generated responses with text-to-speech</p>
+                                <p>• GPT answers are spoken automatically</p>
+                                <p>• Use mute/stop controls during speech playback</p>
                                 <p>• Review conversation history to track your progress</p>
                             </div>
                         </div>

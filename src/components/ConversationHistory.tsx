@@ -22,7 +22,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 h-96 flex flex-col">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 h-[80vh] flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-green-600" />
