@@ -56,28 +56,71 @@ class OpenAIService {
         return this.client !== null && this.config.apiKey !== '' && this.config.apiKey !== 'your_openai_api_key_here';
     }
 
-    async generateInterviewResponse(question: string, context?: string): Promise<string> {
+    async generateInterviewResponse(
+        question: string,
+        context?: {
+            resume?: string;
+            jobDescription?: string;
+            additionalContext?: string;
+        }
+    ): Promise<string> {
         if (!this.isConfigured()) {
             throw new Error('OpenAI API key not configured. Please set VITE_OPENAI_API_KEY in your .env.local file.');
         }
 
         try {
-            const systemPrompt = `You are an intelligent interview assistant helping someone practice for job interviews. 
-      
+            // Build personalized system prompt
+            let systemPrompt = `You are an intelligent interview assistant helping someone practice for job interviews.
+
 Guidelines:
 - Provide professional, confident, and authentic responses
 - Keep responses concise but comprehensive (2-4 sentences)
 - Include specific examples when appropriate
 - Maintain a positive and professional tone
-- Tailor responses to common interview scenarios
 - Focus on technical skills, soft skills, and career growth
-- Don't ask me any questions, just answer the question
+- Use first person ("I have experience with...", "In my role at...")
+- Don't ask questions, just answer the interview question`;
+
+            // Add resume context if available
+            if (context?.resume) {
+                systemPrompt += `
+
+CANDIDATE'S RESUME CONTEXT:
+${context.resume.substring(0, 1500)}${context.resume.length > 1500 ? '...' : ''}
+
+Instructions: Use details from the candidate's resume to make responses specific and credible. Reference actual experiences, skills, technologies, and achievements mentioned in the resume.`;
+            }
+
+            // Add job description context if available
+            if (context?.jobDescription) {
+                systemPrompt += `
+
+TARGET JOB DESCRIPTION:
+${context.jobDescription.substring(0, 1000)}${context.jobDescription.length > 1000 ? '...' : ''}
+
+Instructions: Tailor the response to align with the job requirements. Highlight relevant skills and experiences that match the job description.`;
+            }
+
+            systemPrompt += `
 
 Context: This is a practice interview session where the user is preparing for real interviews.`;
 
-            const userPrompt = `Interview Question: "${question}"
+            // Build user prompt
+            let userPrompt = `Interview Question: "${question}"
 
-Please provide a professional interview response that demonstrates competency, confidence, and authenticity. ${context ? `Additional context: ${context}` : ''}`;
+Please provide a professional interview response that demonstrates competency, confidence, and authenticity.`;
+
+            if (context?.resume && context?.jobDescription) {
+                userPrompt += ` Make sure to connect your background from the resume to the requirements in the job description.`;
+            } else if (context?.resume) {
+                userPrompt += ` Use specific examples and details from your background.`;
+            } else if (context?.jobDescription) {
+                userPrompt += ` Tailor your response to show you're a good fit for this role.`;
+            }
+
+            if (context?.additionalContext) {
+                userPrompt += ` Additional context: ${context.additionalContext}`;
+            }
 
             const response = await this.client!.chat.completions.create({
                 model: this.config.model,

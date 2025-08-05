@@ -5,6 +5,7 @@ import ResponseGenerator from './ResponseGenerator';
 import ConversationHistory from './ConversationHistory';
 import TextToSpeech, { type TextToSpeechRef } from './TextToSpeech';
 import OpenAIConfig from './OpenAIConfig';
+import DocumentManager from './DocumentManager';
 
 interface ConversationItem {
     id: string;
@@ -21,6 +22,8 @@ export default function InterviewDashboard() {
     const [openaiConfigured, setOpenaiConfigured] = useState(false);
     const [isResponsePlaying, setIsResponsePlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
+    const [resumeText, setResumeText] = useState('');
+    const [jobDescription, setJobDescription] = useState('');
     const [sessionStats, setSessionStats] = useState({
         questionsAnswered: 0,
         avgResponseTime: 0,
@@ -89,6 +92,14 @@ export default function InterviewDashboard() {
         textToSpeechRef.current?.stop();
     }, []);
 
+    const handleResumeUpdate = useCallback((text: string) => {
+        setResumeText(text);
+    }, []);
+
+    const handleJobDescriptionUpdate = useCallback((text: string) => {
+        setJobDescription(text);
+    }, []);
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
             {/* Header */}
@@ -146,6 +157,14 @@ export default function InterviewDashboard() {
                             isMuted={isMuted}
                         />
 
+                        {/* Document Manager */}
+                        <DocumentManager
+                            onResumeUpdate={handleResumeUpdate}
+                            onJobDescriptionUpdate={handleJobDescriptionUpdate}
+                            resumeText={resumeText}
+                            jobDescription={jobDescription}
+                        />
+
                         {/* OpenAI Configuration */}
                         <OpenAIConfig onConfigChange={setOpenaiConfigured} />
 
@@ -154,6 +173,8 @@ export default function InterviewDashboard() {
                             question={currentQuestion}
                             onResponseGenerated={handleResponseGenerated}
                             openaiConfigured={openaiConfigured}
+                            resumeText={resumeText}
+                            jobDescription={jobDescription}
                         />
 
                         {/* Text-to-Speech */}
@@ -177,32 +198,41 @@ export default function InterviewDashboard() {
                         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white">
                             <h3 className="font-semibold text-lg mb-3">💡 Pro Tips for Success</h3>
                             <div className="space-y-2 text-sm opacity-90">
+                                <p>• Upload your resume for personalized responses</p>
+                                <p>• Add job description (file or text) for role-specific answers</p>
                                 <p>• Use the microphone to practice with real voice input</p>
                                 <p>• Listen to generated responses with text-to-speech</p>
                                 <p>• Review conversation history to track your progress</p>
-                                <p>• Practice answering follow-up questions naturally</p>
                             </div>
                         </div>
 
                         {/* Feature Highlights */}
                         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
                             <h3 className="font-semibold text-gray-800 mb-4">🚀 Features</h3>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                    <div className="text-2xl font-bold text-blue-600 mb-1">Real-time</div>
+                                    <div className="text-lg font-bold text-blue-600 mb-1">Real-time</div>
                                     <div className="text-xs text-blue-700">Voice Recognition</div>
                                 </div>
                                 <div className="text-center p-3 bg-green-50 rounded-lg">
-                                    <div className="text-2xl font-bold text-green-600 mb-1">AI-Powered</div>
+                                    <div className="text-lg font-bold text-green-600 mb-1">AI-Powered</div>
                                     <div className="text-xs text-green-700">Response Generation</div>
                                 </div>
                                 <div className="text-center p-3 bg-purple-50 rounded-lg">
-                                    <div className="text-2xl font-bold text-purple-600 mb-1">Smart</div>
+                                    <div className="text-lg font-bold text-purple-600 mb-1">Smart</div>
                                     <div className="text-xs text-purple-700">Text-to-Speech</div>
                                 </div>
                                 <div className="text-center p-3 bg-orange-50 rounded-lg">
-                                    <div className="text-2xl font-bold text-orange-600 mb-1">Live</div>
+                                    <div className="text-lg font-bold text-orange-600 mb-1">Live</div>
                                     <div className="text-xs text-orange-700">Session Tracking</div>
+                                </div>
+                                <div className="text-center p-3 bg-indigo-50 rounded-lg">
+                                    <div className="text-lg font-bold text-indigo-600 mb-1">Resume</div>
+                                    <div className="text-xs text-indigo-700">Upload & Analysis</div>
+                                </div>
+                                <div className="text-center p-3 bg-teal-50 rounded-lg">
+                                    <div className="text-lg font-bold text-teal-600 mb-1">Tailored</div>
+                                    <div className="text-xs text-teal-700">Job Matching</div>
                                 </div>
                             </div>
                         </div>

@@ -6,9 +6,17 @@ interface ResponseGeneratorProps {
     question: string;
     onResponseGenerated: (response: string) => void;
     openaiConfigured?: boolean;
+    resumeText?: string;
+    jobDescription?: string;
 }
 
-export default function ResponseGenerator({ question, onResponseGenerated, openaiConfigured = false }: ResponseGeneratorProps) {
+export default function ResponseGenerator({
+    question,
+    onResponseGenerated,
+    openaiConfigured = false,
+    resumeText = '',
+    jobDescription = ''
+}: ResponseGeneratorProps) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentResponse, setCurrentResponse] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -45,9 +53,13 @@ export default function ResponseGenerator({ question, onResponseGenerated, opena
             let response = '';
 
             if (openaiConfigured && openaiService.isConfigured()) {
-                // Try OpenAI first
+                // Try OpenAI first with context
                 try {
-                    response = await openaiService.generateInterviewResponse(question);
+                    const context = {
+                        resume: resumeText || undefined,
+                        jobDescription: jobDescription || undefined
+                    };
+                    response = await openaiService.generateInterviewResponse(question, context);
                     setResponseSource('openai');
                 } catch (openaiError: any) {
                     console.warn('OpenAI failed, falling back to static responses:', openaiError.message);
