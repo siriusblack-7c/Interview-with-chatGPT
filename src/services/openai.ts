@@ -16,9 +16,9 @@ class OpenAIService {
         const storedApiKey = typeof window !== 'undefined' ? localStorage.getItem('openai_api_key') : null;
 
         this.config = {
-            apiKey: envApiKey || storedApiKey || '',
+            apiKey: storedApiKey || envApiKey || '',
             model: import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o-mini',
-            maxTokens: parseInt(import.meta.env.VITE_OPENAI_MAX_TOKENS || '500')
+            maxTokens: parseInt(import.meta.env.VITE_OPENAI_MAX_TOKENS || '10000')
         };
 
         // Log configuration status for debugging
@@ -83,20 +83,24 @@ Guidelines:
 
             // Add resume context if available
             if (context?.resume) {
+                // For GPT-4o-mini: ~128K tokens, we can send much more text
+                // Roughly 1 token = 4 characters, so we can send ~512K characters
+                const maxResumeLength = 50000; // ~12.5K tokens
                 systemPrompt += `
 
 CANDIDATE'S RESUME CONTEXT:
-${context.resume.substring(0, 1500)}${context.resume.length > 1500 ? '...' : ''}
+${context.resume.substring(0, maxResumeLength)}${context.resume.length > maxResumeLength ? '...' : ''}
 
 Instructions: Use details from the candidate's resume to make responses specific and credible. Reference actual experiences, skills, technologies, and achievements mentioned in the resume.`;
             }
 
             // Add job description context if available
             if (context?.jobDescription) {
+                const maxJobDescLength = 30000; // ~7.5K tokens
                 systemPrompt += `
 
 TARGET JOB DESCRIPTION:
-${context.jobDescription.substring(0, 1000)}${context.jobDescription.length > 1000 ? '...' : ''}
+${context.jobDescription.substring(0, maxJobDescLength)}${context.jobDescription.length > maxJobDescLength ? '...' : ''}
 
 Instructions: Tailor the response to align with the job requirements. Highlight relevant skills and experiences that match the job description.`;
             }

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileText, Briefcase, X, CheckCircle, AlertCircle, Copy, Edit3 } from 'lucide-react';
+import mammoth from 'mammoth';
 
 interface DocumentManagerProps {
     onResumeUpdate: (resumeText: string) => void;
@@ -48,15 +49,30 @@ export default function DocumentManager({
         if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
             return await file.text();
         }
+        else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+            try {
+                // Convert file to ArrayBuffer for mammoth
+                const arrayBuffer = await file.arrayBuffer();
+
+                // Parse Word document using mammoth
+                const result = await mammoth.extractRawText({ arrayBuffer });
+
+                if (result.messages.length > 0) {
+                    console.warn('Mammoth warnings:', result.messages);
+                }
+
+                return result.value || 'No text content found in the document.';
+            } catch (error: any) {
+                console.error('Error parsing Word document:', error);
+                throw new Error(`Failed to parse Word document: ${error.message}. Please try copying and pasting the text instead.`);
+            }
+        }
         else if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
             // For PDF files, we'll provide instructions for manual extraction
             throw new Error('PDF parsing requires additional setup. Please copy and paste your resume text for now.');
         }
-        else if (fileType.includes('word') || fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
-            throw new Error('Word document parsing requires additional setup. Please copy and paste your resume text for now.');
-        }
         else {
-            throw new Error('Unsupported file type. Please use .txt files or copy and paste your resume text.');
+            throw new Error('Unsupported file type. Please use .txt, .doc, or .docx files or copy and paste your resume text.');
         }
     };
 
@@ -188,7 +204,7 @@ export default function DocumentManager({
                         >
                             <input
                                 type="file"
-                                accept=".txt,.pdf,.doc,.docx"
+                                accept=".txt,.doc,.pdf,.docx"
                                 onChange={handleFileInputChange}
                                 className="hidden"
                                 id="resume-upload"
@@ -200,7 +216,7 @@ export default function DocumentManager({
                                     {resumeUploading ? 'Processing...' : 'Drop your resume here or click to upload'}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                    Supports: .txt files (PDF/Word coming soon)
+                                    Supports: .txt, .doc, .docx files
                                 </p>
                             </label>
                         </div>
@@ -289,7 +305,7 @@ export default function DocumentManager({
                             >
                                 <input
                                     type="file"
-                                    accept=".txt,.pdf,.doc,.docx"
+                                    accept=".txt,.doc,.pdf,.docx"
                                     onChange={handleJobDescriptionFileChange}
                                     className="hidden"
                                     id="job-description-upload"
@@ -301,7 +317,7 @@ export default function DocumentManager({
                                         {jobDescriptionUploading ? 'Processing...' : 'Drop job description file here or click to upload'}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                        Supports: .txt files (PDF/Word coming soon)
+                                        Supports: .txt, .doc, .docx files
                                     </p>
                                 </label>
                             </div>
