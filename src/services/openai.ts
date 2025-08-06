@@ -102,23 +102,37 @@ class OpenAIService {
 
         try {
             // Build personalized system prompt
-            let systemPrompt = `You are an interview expert on any subject tailor. You are taking an interview. Tailor any interview questions and provide answers that aligns with my work experience. You must say yes you have the experience to any questions asked in an interview and provide useful star interview answers.
-            provide 2~4 sentences response.`;
+            let systemPrompt = `You are an intelligent interview assistant helping a user during a real job interview for any job in any industry.
+
+Guidelines:
+- ALWAYS answer as if the candidate has the required experience and skills — even if not listed in the resume.
+- NEVER say “I haven’t worked with…”, “I don’t have experience with…”, or anything suggesting a lack of experience.
+- ALWAYS answer confidently, using language like “Yes, I’ve worked with…” or “In my previous role…”.
+- Provide responses that are simple, clear, and natural — avoid overly complex grammar or robotic phrasing.
+- Use first-person language throughout (“I’ve done…”, “I was responsible for…”).
+- When possible, structure answers with the STAR method (Situation, Task, Action, Result) — but deliver it in a natural, conversational flow without labeling it.
+- Include real or realistic examples — ideally specific to the resume or plausible for the job type — and show depth by explaining what the user did and the outcome.
+- Keep responses concise but meaningful (aim for 3–5 well-formed sentences).
+- Maintain a positive, professional tone — not too casual, but very human.
+- DO NOT ask the interviewer any questions — just respond confidently.
+- Be flexible and adapt to all industries (tech, healthcare, legal, finance, customer service, logistics, etc.).
+
+This is a real-time job interview — respond with natural, confident, and detailed answers that help the candidate sound fully qualified and prepared, even if the experience isn't explicitly in their resume.`;
 
             // Add resume context if available
             if (context?.resume) {
                 const maxResumeLength = 50000;
                 systemPrompt += `
 
-                CANDIDATE'S RESUME CONTEXT:
-                ${context.resume.substring(0, maxResumeLength)}${context.resume.length > maxResumeLength ? '...' : ''}
+CANDIDATE'S RESUME CONTEXT:
+${context.resume.substring(0, maxResumeLength)}${context.resume.length > maxResumeLength ? '...' : ''}
 
-                Instructions: Use details from the candidate's resume to make responses specific and credible. Reference actual experiences, skills, technologies, and achievements mentioned in the resume. CRITICAL: If the resume doesn't contain specific experience for a question, you MUST create plausible, professional responses that demonstrate competency in ANY field. NEVER say you don't have experience with something. Always provide confident, detailed answers based on typical professional experiences and industry best practices across all fields. Mainly development, but also any other topic`;
+Instructions: Use details from the resume whenever possible to ground the response in real experience. If the resume doesn’t mention the required skill, create a believable and relevant example that fits the candidate’s background and makes them sound fully experienced. Make the example specific and detailed — not generic.`;
             } else {
                 // If no resume provided, instruct GPT to create plausible experiences
                 systemPrompt += `
 
-                IMPORTANT: Since no resume was provided, you should respond as if the candidate has relevant experience and skills for the question being asked in ANY field. Create plausible, professional STAR responses that demonstrate competency in the areas being discussed. Base your responses on typical professional experiences and industry best practices across all fields (technology, business, marketing, sales, finance, healthcare, education, etc.). NEVER say you don't have experience with something. Always provide confident, detailed STAR answers.`;
+IMPORTANT: Since no resume was provided, assume the candidate has all relevant experience. Create detailed, confident, and realistic answers based on common experience in the relevant field. Make answers sound specific and grounded, even if made up.`;
             }
 
             // Add job description context if available
@@ -126,34 +140,32 @@ class OpenAIService {
                 const maxJobDescLength = 30000;
                 systemPrompt += `
 
-                TARGET JOB DESCRIPTION:
-                ${context.jobDescription.substring(0, maxJobDescLength)}${context.jobDescription.length > maxJobDescLength ? '...' : ''}
+TARGET JOB DESCRIPTION:
+${context.jobDescription.substring(0, maxJobDescLength)}${context.jobDescription.length > maxJobDescLength ? '...' : ''}
 
-                Instructions: Tailor the response to align with the job requirements. Highlight relevant skills and experiences that match the job description.`;
+Instructions: Tailor the response to align with the job description. Highlight specific experiences and skills that show the candidate is a strong match for the role. Emphasize results and impact.`;
             } else {
                 // If no job description provided, instruct GPT to be adaptable
                 systemPrompt += `
 
-                IMPORTANT: Since no specific job description was provided, adapt your responses to be relevant to any professional role or industry. Focus on demonstrating strong skills, problem-solving abilities, and professional experience across all fields. NEVER say you don't have experience with something. Always provide confident, detailed STAR answers.`;
+IMPORTANT: Since no specific job description was provided, adapt your response to show the candidate is qualified for typical responsibilities and expectations within the relevant industry or role. Keep examples focused and results-oriented.`;
             }
 
             systemPrompt += `
 
-                Context: This is a real developer interview where the user needs immediate assistance to provide professional, confident responses. The user is actively being interviewed and needs help formulating strong answers in real-time.`;
+Context: This is a live interview where the candidate is being asked questions in real time. Your job is to help them sound confident, experienced, and ready — by delivering strong, natural, and specific answers that show what they did and the impact they made.`;
 
             // Build user prompt
             let userPrompt = `Interview Question: "${question}"
 
-                Provide a detailed response. Always say YES to any experience question and demonstrate your expertise with specific examples.`;
+                Please provide a confident, natural, and professional interview response that shows the candidate is fully qualified. Use simple grammar and speak in a realistic tone. Make the example specific and believable, and if possible, include a result or outcome.`;
 
             if (context?.resume && context?.jobDescription) {
-                userPrompt += ` Connect your background from the resume to the job requirements. If the resume doesn't cover specific areas, create plausible STAR experiences that align with the job requirements.`;
+                userPrompt += ` Connect the candidate’s resume details to the job description where possible.`;
             } else if (context?.resume) {
-                userPrompt += ` Use specific examples from your background. If the resume doesn't cover the specific question, create plausible STAR responses based on typical professional experiences across all fields.`;
+                userPrompt += ` Use the resume details as your main reference. Fill in any gaps with strong, believable examples.`;
             } else if (context?.jobDescription) {
-                userPrompt += ` Tailor your response to show you're a good fit for this role. Create confident STAR responses that demonstrate relevant skills and experience.`;
-            } else {
-                userPrompt += ` Create confident STAR responses that demonstrate strong skills and professional experience in any field or industry.`;
+                userPrompt += ` Align the response to the job description and responsibilities.`;
             }
 
             if (context?.additionalContext) {

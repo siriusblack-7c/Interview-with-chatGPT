@@ -5,15 +5,19 @@ import mammoth from 'mammoth';
 interface DocumentManagerProps {
     onResumeUpdate: (resumeText: string) => void;
     onJobDescriptionUpdate: (jobDescription: string) => void;
+    onAdditionalContextUpdate?: (additionalContext: string) => void;
     resumeText?: string;
     jobDescription?: string;
+    additionalContext?: string;
 }
 
 export default function DocumentManager({
     onResumeUpdate,
     onJobDescriptionUpdate,
+    onAdditionalContextUpdate,
     resumeText = '',
-    jobDescription = ''
+    jobDescription = '',
+    additionalContext = ''
 }: DocumentManagerProps) {
     const [resumeFile, setResumeFile] = useState<File | null>(null);
     const [resumeUploading, setResumeUploading] = useState(false);
@@ -24,6 +28,9 @@ export default function DocumentManager({
     const [jobDescriptionFile, setJobDescriptionFile] = useState<File | null>(null);
     const [jobDescriptionUploading, setJobDescriptionUploading] = useState(false);
     const [jobDescriptionError, setJobDescriptionError] = useState<string | null>(null);
+
+    const [additionalContextText, setAdditionalContextText] = useState(additionalContext);
+    const [showAdditionalContextPaste, setShowAdditionalContextPaste] = useState(false);
 
     // Resume file upload handler
     const handleResumeUpload = useCallback(async (file: File) => {
@@ -144,6 +151,12 @@ export default function DocumentManager({
         setJobDescriptionFile(null);
         setJobDescriptionError(null);
         onJobDescriptionUpdate('');
+    };
+
+    const clearAdditionalContext = () => {
+        setAdditionalContextText('');
+        setShowAdditionalContextPaste(false);
+        onAdditionalContextUpdate?.('');
     };
 
     // Copy to clipboard functionality
@@ -435,13 +448,128 @@ export default function DocumentManager({
                     )}
                 </div>
 
+                {/* Additional Context Section */}
+                <div>
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                            <Edit3 className="h-4 w-4 text-orange-600" />
+                            Additional Context
+                        </h4>
+                        <div className="flex items-center gap-2">
+                            {additionalContext && (
+                                <button
+                                    onClick={clearAdditionalContext}
+                                    className="text-red-600 hover:text-red-700 text-xs flex items-center gap-1"
+                                >
+                                    <X className="h-3 w-3" />
+                                    Clear
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setShowAdditionalContextPaste(!showAdditionalContextPaste)}
+                                className="text-orange-600 hover:text-orange-700 text-xs flex items-center gap-1"
+                            >
+                                <Edit3 className="h-3 w-3" />
+                                {showAdditionalContextPaste ? 'Hide' : 'Add'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {!additionalContext && !showAdditionalContextPaste ? (
+                        <div className="text-center">
+                            <p className="text-sm text-gray-600 mb-3">Add any additional context for better responses</p>
+                            <button
+                                onClick={() => setShowAdditionalContextPaste(true)}
+                                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 mx-auto"
+                            >
+                                <Edit3 className="h-4 w-4" />
+                                Add Context
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {showAdditionalContextPaste && (
+                                <div>
+                                    <textarea
+                                        value={additionalContextText}
+                                        onChange={(e) => setAdditionalContextText(e.target.value)}
+                                        placeholder="Add any additional context, preferences, or specific information that should be considered in responses..."
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                                        rows={4}
+                                    />
+                                    <div className="flex items-center justify-between mt-2">
+                                        <span className="text-xs text-gray-500">
+                                            {additionalContextText.length} characters
+                                        </span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setShowAdditionalContextPaste(false)}
+                                                className="text-gray-600 hover:text-gray-700 px-3 py-1 text-xs"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    onAdditionalContextUpdate?.(additionalContextText);
+                                                    setShowAdditionalContextPaste(false);
+                                                }}
+                                                className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs"
+                                                disabled={!additionalContextText.trim()}
+                                            >
+                                                Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {additionalContext && !showAdditionalContextPaste && (
+                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Edit3 className="h-4 w-4 text-orange-600" />
+                                            <span className="text-sm font-medium text-orange-800">
+                                                Additional Context Loaded
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => copyToClipboard(additionalContext)}
+                                                className="text-orange-600 hover:text-orange-700 p-1"
+                                                title="Copy additional context"
+                                            >
+                                                <Copy className="h-3 w-3" />
+                                            </button>
+                                            <button
+                                                onClick={() => setShowAdditionalContextPaste(true)}
+                                                className="text-orange-600 hover:text-orange-700 p-1"
+                                                title="Edit additional context"
+                                            >
+                                                <Edit3 className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-orange-700">
+                                        ✓ {additionalContext.length} characters • Entered manually • Click edit to modify
+                                    </div>
+                                    <div className="mt-2 text-xs text-orange-600 bg-orange-100 rounded p-2 max-h-20 overflow-y-auto">
+                                        {additionalContext.substring(0, 200)}
+                                        {additionalContext.length > 200 && '...'}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
                 {/* Context Summary */}
-                {(resumeText || jobDescription) && (
+                {(resumeText || jobDescription || additionalContext) && (
                     <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
                         <h5 className="text-sm font-medium text-gray-800 mb-2">🎯 Interview Context Active</h5>
                         <div className="text-xs text-gray-600 space-y-1">
                             {resumeText && <p>✓ Resume loaded - responses will reference your background</p>}
                             {jobDescription && <p>✓ Job description set - responses will be tailored to the role</p>}
+                            {additionalContext && <p>✓ Additional context provided - responses will be more personalized</p>}
                             <p className="text-blue-600 font-medium">
                                 OpenAI will now generate personalized interview responses!
                             </p>

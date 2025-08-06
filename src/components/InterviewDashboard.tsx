@@ -24,6 +24,7 @@ export default function InterviewDashboard() {
     const [isMuted, setIsMuted] = useState(false);
     const [resumeText, setResumeText] = useState('');
     const [jobDescription, setJobDescription] = useState('');
+    const [additionalContext, setAdditionalContext] = useState('');
     const [sessionStats, setSessionStats] = useState({
         questionsAnswered: 0,
         avgResponseTime: 0,
@@ -100,6 +101,10 @@ export default function InterviewDashboard() {
         setJobDescription(text);
     }, []);
 
+    const handleAdditionalContextUpdate = useCallback((text: string) => {
+        setAdditionalContext(text);
+    }, []);
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
             {/* Header */}
@@ -163,6 +168,7 @@ export default function InterviewDashboard() {
                             openaiConfigured={openaiConfigured}
                             resumeText={resumeText}
                             jobDescription={jobDescription}
+                            additionalContext={additionalContext}
                         />
 
                         {/* Hidden Text-to-Speech for automatic playback */}
@@ -177,8 +183,10 @@ export default function InterviewDashboard() {
                         <DocumentManager
                             onResumeUpdate={handleResumeUpdate}
                             onJobDescriptionUpdate={handleJobDescriptionUpdate}
+                            onAdditionalContextUpdate={handleAdditionalContextUpdate}
                             resumeText={resumeText}
                             jobDescription={jobDescription}
+                            additionalContext={additionalContext}
                         />
 
                         {/* OpenAI Configuration */}

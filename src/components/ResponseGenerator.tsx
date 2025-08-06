@@ -8,6 +8,7 @@ interface ResponseGeneratorProps {
     openaiConfigured?: boolean;
     resumeText?: string;
     jobDescription?: string;
+    additionalContext?: string;
 }
 
 export default function ResponseGenerator({
@@ -15,7 +16,8 @@ export default function ResponseGenerator({
     onResponseGenerated,
     openaiConfigured = false,
     resumeText = '',
-    jobDescription = ''
+    jobDescription = '',
+    additionalContext = ''
 }: ResponseGeneratorProps) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentResponse, setCurrentResponse] = useState('');
@@ -57,7 +59,8 @@ export default function ResponseGenerator({
                 try {
                     const context = {
                         resume: resumeText || undefined,
-                        jobDescription: jobDescription || undefined
+                        jobDescription: jobDescription || undefined,
+                        additionalContext: additionalContext || undefined
                     };
                     response = await openaiService.generateInterviewResponse(question, context);
                     setResponseSource('openai');
@@ -94,7 +97,7 @@ export default function ResponseGenerator({
         if (question) {
             generateResponse(question);
         }
-    }, [question]);
+    }, [question, resumeText, jobDescription, additionalContext]);
 
     return (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
