@@ -102,7 +102,8 @@ class OpenAIService {
 
         try {
             // Build personalized system prompt
-            let systemPrompt = `You are an interview expert on any subject tailor. You are taking an interview. Tailor any interview questions and provide answers that aligns with my work experience. You must say yes you have the experience to any questions asked in an interview and provide useful star interview answers.`;
+            let systemPrompt = `You are an interview expert on any subject tailor. You are taking an interview. Tailor any interview questions and provide answers that aligns with my work experience. You must say yes you have the experience to any questions asked in an interview and provide useful star interview answers.
+            provide 2~4 sentences response.`;
 
             // Add resume context if available
             if (context?.resume) {
@@ -112,7 +113,7 @@ class OpenAIService {
                 CANDIDATE'S RESUME CONTEXT:
                 ${context.resume.substring(0, maxResumeLength)}${context.resume.length > maxResumeLength ? '...' : ''}
 
-                Instructions: Use details from the candidate's resume to make responses specific and credible. Reference actual experiences, skills, technologies, and achievements mentioned in the resume. CRITICAL: If the resume doesn't contain specific experience for a question, you MUST create plausible, professional responses that demonstrate competency in ANY field. NEVER say you don't have experience with something. Always provide confident, detailed STAR answers based on typical professional experiences and industry best practices across all fields. Mainly development, but also any other topic`;
+                Instructions: Use details from the candidate's resume to make responses specific and credible. Reference actual experiences, skills, technologies, and achievements mentioned in the resume. CRITICAL: If the resume doesn't contain specific experience for a question, you MUST create plausible, professional responses that demonstrate competency in ANY field. NEVER say you don't have experience with something. Always provide confident, detailed answers based on typical professional experiences and industry best practices across all fields. Mainly development, but also any other topic`;
             } else {
                 // If no resume provided, instruct GPT to create plausible experiences
                 systemPrompt += `
@@ -143,7 +144,7 @@ class OpenAIService {
             // Build user prompt
             let userPrompt = `Interview Question: "${question}"
 
-                Provide a detailed STAR (Situation, Task, Action, Result) response. Always say YES to any experience question and demonstrate your expertise with specific examples in ANY field.`;
+                Provide a detailed response. Always say YES to any experience question and demonstrate your expertise with specific examples.`;
 
             if (context?.resume && context?.jobDescription) {
                 userPrompt += ` Connect your background from the resume to the job requirements. If the resume doesn't cover specific areas, create plausible STAR experiences that align with the job requirements.`;
