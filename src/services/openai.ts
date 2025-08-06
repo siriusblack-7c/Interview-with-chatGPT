@@ -72,65 +72,66 @@ class OpenAIService {
             // Build personalized system prompt
             let systemPrompt = `You are an intelligent interview assistant helping a developer during a real job interview.
 
-Guidelines:
-- Provide professional, confident, and authentic responses
-- Keep responses concise but comprehensive (2-4 sentences)
-- Include specific examples when appropriate
-- Maintain a positive and professional tone
-- Focus on technical skills, soft skills, and career growth
-- Use first person ("I have experience with...", "In my role at...")
-- Don't ask questions, just answer the interview question
-- This is a real-time interview - provide immediate, actionable responses`;
+                Guidelines:
+                - Provide professional, confident, and authentic responses
+                - Keep responses concise but comprehensive (2-4 sentences)
+                - Include specific examples when appropriate
+                - Maintain a positive and professional tone
+                - Focus on technical skills, soft skills, and career growth
+                - Use first person ("I have experience with...", "In my role at...")
+                - Don't ask questions, just answer the interview question
+                - This is a real-time interview - provide immediate, actionable responses
+                - Additionaly, provide good respond for out-topic of development`;
 
             // Add resume context if available
             if (context?.resume) {
-                // For GPT-4o-mini: ~128K tokens, we can send much more text
-                // Roughly 1 token = 4 characters, so we can send ~512K characters
-                const maxResumeLength = 50000; // ~12.5K tokens
+                const maxResumeLength = 50000;
                 systemPrompt += `
 
-CANDIDATE'S RESUME CONTEXT:
-${context.resume.substring(0, maxResumeLength)}${context.resume.length > maxResumeLength ? '...' : ''}
+                CANDIDATE'S RESUME CONTEXT:
+                ${context.resume.substring(0, maxResumeLength)}${context.resume.length > maxResumeLength ? '...' : ''}
 
-Instructions: Use details from the candidate's resume to make responses specific and credible. Reference actual experiences, skills, technologies, and achievements mentioned in the resume. If the resume doesn't contain specific experience for a question, create plausible, professional responses that demonstrate competency in the areas being discussed. Base your responses on typical developer experiences and industry best practices when resume details are insufficient.`;
+                Instructions: Use details from the candidate's resume to make responses specific and credible. Reference actual experiences, skills, technologies, and achievements mentioned in the resume. CRITICAL: If the resume doesn't contain specific experience for a question, you MUST create plausible, professional responses that demonstrate competency. NEVER say you don't have experience with something. Always provide confident, detailed answers based on typical developer experiences and industry best practices.`;
             } else {
                 // If no resume provided, instruct GPT to create plausible experiences
                 systemPrompt += `
 
-IMPORTANT: Since no resume was provided, you should respond as if the candidate has relevant experience and skills for the question being asked. Create plausible, professional responses that demonstrate competency in the areas being discussed. Base your responses on typical developer experiences and industry best practices.`;
+                IMPORTANT: Since no resume was provided, you should respond as if the candidate has relevant experience and skills for the question being asked. Create plausible, professional responses that demonstrate competency in the areas being discussed. Base your responses on typical developer experiences and industry best practices. NEVER say you don't have experience with something. Always provide confident, detailed answers.`;
             }
 
             // Add job description context if available
             if (context?.jobDescription) {
-                const maxJobDescLength = 30000; // ~7.5K tokens
+                const maxJobDescLength = 30000;
                 systemPrompt += `
 
-TARGET JOB DESCRIPTION:
-${context.jobDescription.substring(0, maxJobDescLength)}${context.jobDescription.length > maxJobDescLength ? '...' : ''}
+                TARGET JOB DESCRIPTION:
+                ${context.jobDescription.substring(0, maxJobDescLength)}${context.jobDescription.length > maxJobDescLength ? '...' : ''}
 
-Instructions: Tailor the response to align with the job requirements. Highlight relevant skills and experiences that match the job description.`;
+                Instructions: Tailor the response to align with the job requirements. Highlight relevant skills and experiences that match the job description.`;
             } else {
                 // If no job description provided, instruct GPT to be adaptable
                 systemPrompt += `
 
-IMPORTANT: Since no specific job description was provided, adapt your responses to be relevant to general software development roles. Focus on demonstrating strong technical skills, problem-solving abilities, and professional experience.`;
+                IMPORTANT: Since no specific job description was provided, adapt your responses to be relevant to general software development roles. Focus on demonstrating strong technical skills, problem-solving abilities, and professional experience. NEVER say you don't have experience with something. Always provide confident, detailed answers.`;
             }
 
             systemPrompt += `
 
-Context: This is a real developer interview where the user needs immediate assistance to provide professional, confident responses. The user is actively being interviewed and needs help formulating strong answers in real-time.`;
+                Context: This is a real developer interview where the user needs immediate assistance to provide professional, confident responses. The user is actively being interviewed and needs help formulating strong answers in real-time.`;
 
             // Build user prompt
             let userPrompt = `Interview Question: "${question}"
 
-Please provide a professional interview response that demonstrates competency, confidence, and authenticity.`;
+                Please provide a professional interview response that demonstrates competency, confidence, and authenticity. CRITICAL: Always provide a confident, detailed answer. If you don't have specific experience mentioned in the resume, create plausible, professional responses based on typical developer experiences and industry best practices. NEVER say you don't have experience with something.`;
 
             if (context?.resume && context?.jobDescription) {
-                userPrompt += ` Make sure to connect your background from the resume to the requirements in the job description.`;
+                userPrompt += ` Make sure to connect your background from the resume to the requirements in the job description. If the resume doesn't cover specific areas, create plausible experiences that align with the job requirements.`;
             } else if (context?.resume) {
-                userPrompt += ` Use specific examples and details from your background.`;
+                userPrompt += ` Use specific examples and details from your background. If the resume doesn't cover the specific question, create plausible, professional responses based on typical developer experiences.`;
             } else if (context?.jobDescription) {
-                userPrompt += ` Tailor your response to show you're a good fit for this role.`;
+                userPrompt += ` Tailor your response to show you're a good fit for this role. Create confident, detailed responses that demonstrate relevant skills and experience.`;
+            } else {
+                userPrompt += ` Create confident, detailed responses that demonstrate strong technical skills and professional experience in software development.`;
             }
 
             if (context?.additionalContext) {
