@@ -17,27 +17,33 @@ export const QUESTION_PATTERNS = {
  */
 export const isQuestion = (text: string): boolean => {
     const lowerText = text.toLowerCase().trim();
+    console.log('Checking if question:', lowerText);
 
     // Check if it ends with question mark
     if (QUESTION_PATTERNS.endsWithQuestion(lowerText)) {
+        console.log('✅ Ends with question mark');
         return true;
     }
 
     // Check for question words at the beginning
     const words = lowerText.split(' ');
     if (QUESTION_PATTERNS.questionWords.some(word => words[0] === word)) {
+        console.log('✅ Starts with question word:', words[0]);
         return true;
     }
 
     // Check for modal verbs followed by a subject
     if (QUESTION_PATTERNS.modalVerbs.some(verb => words[0] === verb)) {
+        console.log('✅ Starts with modal verb:', words[0]);
         return true;
     }
 
     // Check for question phrases
     if (QUESTION_PATTERNS.questionPhrases.some(phrase => lowerText.includes(phrase))) {
+        console.log('✅ Contains question phrase');
         return true;
     }
 
+    console.log('❌ Not detected as question');
     return false;
 };

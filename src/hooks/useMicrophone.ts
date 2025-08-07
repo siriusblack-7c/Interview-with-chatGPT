@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { isQuestion } from '../utils/questionDetection';
 
 interface UseMicrophoneOptions {
     onQuestionDetected: (question: string) => void;
@@ -62,14 +63,14 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
 
                         if (finalTranscript) {
                             setTranscript(finalTranscript);
+                            console.log('Transcript received:', finalTranscript);
+                            console.log('Is listening:', isListening);
+                            console.log('Is question:', isQuestion(finalTranscript));
+
                             // Only process if listening is enabled
-                            if (isListening) {
-                                // Import and use the question detection
-                                import('../utils/questionDetection').then(({ isQuestion }) => {
-                                    if (isQuestion(finalTranscript)) {
-                                        onQuestionDetected(finalTranscript);
-                                    }
-                                });
+                            if (isListening && isQuestion(finalTranscript)) {
+                                console.log('Question detected! Calling onQuestionDetected');
+                                onQuestionDetected(finalTranscript);
                             }
                         }
                     };
