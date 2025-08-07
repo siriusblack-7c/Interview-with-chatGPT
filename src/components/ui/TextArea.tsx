@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit3, Copy, X } from 'lucide-react';
+import { Edit3, Copy } from 'lucide-react';
 import { useClipboard } from '../../hooks/useClipboard';
 
 interface TextAreaProps {
@@ -36,6 +36,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
     placeholder,
     value,
     onChange,
+    //@ts-ignore
     onClear,
     showEdit,
     onToggleEdit,
