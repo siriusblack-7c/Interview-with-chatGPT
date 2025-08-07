@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Square } from 'lucide-react';
+import { isQuestion } from '../utils/questionDetection';
 
 interface SpeechRecognitionProps {
     onQuestionDetected: (question: string) => void;
@@ -42,29 +43,8 @@ export default function SpeechRecognition({
 
                 if (finalTranscript) {
                     setTranscript(finalTranscript);
-                    // Detect if it's a question (ends with ?)
-                    if (finalTranscript.trim().endsWith('?') ||
-                        finalTranscript.toLowerCase().includes('what') ||
-                        finalTranscript.toLowerCase().includes('how') ||
-                        finalTranscript.toLowerCase().includes('why') ||
-                        finalTranscript.toLowerCase().includes('when') ||
-                        finalTranscript.toLowerCase().includes('can') ||
-                        finalTranscript.toLowerCase().includes('could') ||
-                        finalTranscript.toLowerCase().includes('would') ||
-                        finalTranscript.toLowerCase().includes('should') ||
-                        finalTranscript.toLowerCase().includes('do you') ||
-                        finalTranscript.toLowerCase().includes('tell') ||
-                        finalTranscript.toLowerCase().includes('might') ||
-                        finalTranscript.toLowerCase().includes('may') ||
-                        finalTranscript.toLowerCase().includes('must') ||
-                        finalTranscript.toLowerCase().includes('need') ||
-                        finalTranscript.toLowerCase().includes('have') ||
-                        finalTranscript.toLowerCase().includes('do') ||
-                        finalTranscript.toLowerCase().includes('does') ||
-                        finalTranscript.toLowerCase().includes('did') ||
-                        finalTranscript.toLowerCase().includes('will') ||
-                        finalTranscript.toLowerCase().includes('please') ||
-                        finalTranscript.toLowerCase().includes('where')) {
+                    // Use the cleaner question detection function
+                    if (isQuestion(finalTranscript)) {
                         onQuestionDetected(finalTranscript);
                     }
                 }
@@ -136,7 +116,7 @@ export default function SpeechRecognition({
                             }`}
                         title={isListening ? 'Stop Listening' : 'Start Listening'}
                     >
-                        {isListening ? (
+                        {!isListening ? (
                             <MicOff className="h-6 w-6" />
                         ) : (
                             <Mic className="h-6 w-6" />
@@ -162,7 +142,7 @@ export default function SpeechRecognition({
                 </div>
 
                 {transcript && (
-                    <div className="bg-gray-50 rounded-lg p-3 border-2 border-blue-500">
+                    <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-red-500">
                         <p className="text-sm text-gray-600 mb-1">Last heard:</p>
                         <p className="text-gray-800">{transcript}</p>
                     </div>

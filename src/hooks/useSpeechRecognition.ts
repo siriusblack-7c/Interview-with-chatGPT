@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { isQuestion } from '../utils/questionDetection';
 
 interface UseSpeechRecognitionOptions {
     onQuestionDetected: (question: string) => void;
@@ -32,29 +33,8 @@ export const useSpeechRecognition = ({ onQuestionDetected }: UseSpeechRecognitio
 
                 if (finalTranscript) {
                     setTranscript(finalTranscript);
-                    // Detect if it's a question
-                    if (finalTranscript.trim().endsWith('?') ||
-                        finalTranscript.toLowerCase().includes('what') ||
-                        finalTranscript.toLowerCase().includes('how') ||
-                        finalTranscript.toLowerCase().includes('why') ||
-                        finalTranscript.toLowerCase().includes('when') ||
-                        finalTranscript.toLowerCase().includes('can') ||
-                        finalTranscript.toLowerCase().includes('could') ||
-                        finalTranscript.toLowerCase().includes('would') ||
-                        finalTranscript.toLowerCase().includes('should') ||
-                        finalTranscript.toLowerCase().includes('do you') ||
-                        finalTranscript.toLowerCase().includes('tell') ||
-                        finalTranscript.toLowerCase().includes('might') ||
-                        finalTranscript.toLowerCase().includes('may') ||
-                        finalTranscript.toLowerCase().includes('must') ||
-                        finalTranscript.toLowerCase().includes('need') ||
-                        finalTranscript.toLowerCase().includes('have') ||
-                        finalTranscript.toLowerCase().includes('do') ||
-                        finalTranscript.toLowerCase().includes('does') ||
-                        finalTranscript.toLowerCase().includes('did') ||
-                        finalTranscript.toLowerCase().includes('will') ||
-                        finalTranscript.toLowerCase().includes('please') ||
-                        finalTranscript.toLowerCase().includes('where')) {
+                    // Use the cleaner question detection function
+                    if (isQuestion(finalTranscript)) {
                         onQuestionDetected(finalTranscript);
                     }
                 }
