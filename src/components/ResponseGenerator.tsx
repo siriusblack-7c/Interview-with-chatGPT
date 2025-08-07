@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Brain, Clock, CheckCircle, Zap, AlertTriangle, Volume2, VolumeX } from 'lucide-react';
+import { Brain, Clock, CheckCircle, AlertTriangle, Volume2, VolumeX } from 'lucide-react';
 import openaiService from '../services/openai';
 
 interface ResponseGeneratorProps {
@@ -26,7 +26,7 @@ export default function ResponseGenerator({
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentResponse, setCurrentResponse] = useState('');
     const [error, setError] = useState<string | null>(null);
-    const [responseSource, setResponseSource] = useState<'openai' | 'none'>('none');
+    // Removed responseSource to simplify logic
 
     const generateResponse = async (question: string): Promise<string> => {
         console.log('🔧 generateResponse called with:', question);
@@ -47,14 +47,12 @@ export default function ResponseGenerator({
             };
 
             const response = await openaiService.generateInterviewResponse(question, context);
-            setResponseSource('openai');
             setCurrentResponse(response);
             onResponseGenerated(response);
             return response;
 
         } catch (error: any) {
             setError(error.message);
-            setResponseSource('none');
             setCurrentResponse('');
             onResponseGenerated('');
             return '';
@@ -91,12 +89,6 @@ export default function ResponseGenerator({
                                 <Volume2 className="h-6 w-6" />
                             )}
                         </button>
-                    )}
-                    {responseSource === 'openai' && (
-                        <div className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                            <Zap className="h-3 w-3" />
-                            OpenAI
-                        </div>
                     )}
                 </div>
             </div>
