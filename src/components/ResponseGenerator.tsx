@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Brain, Lightbulb, Clock, CheckCircle, Zap, AlertTriangle, Volume2, VolumeX } from 'lucide-react';
 import openaiService from '../services/openai';
-import type { TextToSpeechProps } from './TextToSpeech';
 
 interface ResponseGeneratorProps {
     question: string;
