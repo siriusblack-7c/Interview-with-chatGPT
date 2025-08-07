@@ -15,6 +15,8 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
     const streamRef = useRef<MediaStream | null>(null);
     const recognitionRef = useRef<any>(null);
     const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+    // Mirrors the latest isListening value to avoid stale closure inside onresult/onend
+    const isListeningRef = useRef<boolean>(false);
 
     // Initialize microphone stream on component mount
     useEffect(() => {
@@ -64,13 +66,24 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                         if (finalTranscript) {
                             setTranscript(finalTranscript);
                             console.log('Transcript received:', finalTranscript);
-                            console.log('Is listening:', isListening);
+                            console.log('Is listening:', isListeningRef.current);
                             console.log('Is question:', isQuestion(finalTranscript));
 
                             // Only process if listening is enabled
-                            if (isListening && isQuestion(finalTranscript)) {
+                            if (isListeningRef.current && isQuestion(finalTranscript)) {
                                 console.log('Question detected! Calling onQuestionDetected');
                                 onQuestionDetected(finalTranscript);
+                            }
+                        }
+                    };
+
+                    // If recognition ends unexpectedly (e.g., silence/no-speech), auto-restart while listening
+                    recognitionRef.current.onend = () => {
+                        if (isListeningRef.current) {
+                            try {
+                                recognitionRef.current.start();
+                            } catch (_) {
+                                // ignore rapid start errors
                             }
                         }
                     };
@@ -122,6 +135,11 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
         } catch (error) {
             console.log('Error starting/stopping speech recognition:', error);
         }
+    }, [isListening]);
+
+    // Keep ref in sync with state
+    useEffect(() => {
+        isListeningRef.current = isListening;
     }, [isListening]);
 
     const toggleListening = useCallback(() => {

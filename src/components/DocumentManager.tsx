@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Briefcase, CheckCircle, Pencil  } from 'lucide-react';
+import { Briefcase, CheckCircle, Pencil, FileText, NotebookPen, FolderCheck } from 'lucide-react';
 import { FileUpload } from './ui/FileUpload';
 import { TextArea } from './ui/TextArea';
 
@@ -72,7 +72,7 @@ export default function DocumentManager({
     return (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center gap-2 mb-6">
-                <Briefcase className="h-5 w-5 text-indigo-600" />
+                <FolderCheck className="h-5 w-5 text-indigo-600" />
                 <h3 className="text-lg font-semibold text-gray-800">Interview Context</h3>
                 <div className="ml-auto flex items-center gap-2 text-xs">
                     {resumeText && (
@@ -95,7 +95,7 @@ export default function DocumentManager({
                 <div>
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <Briefcase className="h-4 w-4 text-blue-600" />
+                            <FileText className="h-4 w-4 text-blue-600" />
                             Resume
                         </h4>
                     </div>
@@ -170,7 +170,7 @@ export default function DocumentManager({
                 <div>
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <Briefcase className="h-4 w-4 text-orange-600" />
+                            <NotebookPen className="h-4 w-4 text-orange-600" />
                             Additional Context
                         </h4>
                         <div className="flex items-center gap-2">
