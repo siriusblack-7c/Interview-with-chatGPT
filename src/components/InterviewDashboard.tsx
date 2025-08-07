@@ -7,7 +7,7 @@ import TextToSpeech from './TextToSpeech';
 import OpenAIConfig from './OpenAIConfig';
 import DocumentManager from './DocumentManager';
 import { useConversation } from '../hooks/useConversation';
-import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { useMicrophone } from '../hooks/useMicrophone';
 import type { TextToSpeechRef } from '../types/speech';
 
 export default function InterviewDashboard() {
@@ -24,7 +24,7 @@ export default function InterviewDashboard() {
 
     // Custom hooks
     const { conversations, sessionStats, addQuestion, addResponse, clearHistory } = useConversation();
-    const { isListening, toggleListening } = useSpeechRecognition({
+    const { isListening, toggleListening, transcript, isMicActive } = useMicrophone({
         onQuestionDetected: (question: string) => {
             setCurrentQuestion(question);
             addQuestion(question);
@@ -82,7 +82,7 @@ export default function InterviewDashboard() {
                                 <Briefcase className="h-6 w-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Interview Assistant AI</h1>
+                                <h1 className="text-2xl font-bold text-gray-900">AI Interview Copilot</h1>
                                 <p className="text-sm text-gray-600">Real-time interview question analysis & response generation</p>
                             </div>
                         </div>
@@ -97,9 +97,11 @@ export default function InterviewDashboard() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Zap className="h-4 w-4 text-green-600" />
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${isListening ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${!isMicActive ? 'bg-red-100 text-red-700' :
+                                        isListening ? 'bg-green-100 text-green-700' :
+                                            'bg-blue-100 text-blue-700'
                                         }`}>
-                                        {isListening ? 'Live' : 'Standby'}
+                                        {!isMicActive ? 'No Mic' : isListening ? 'Live' : 'Ready'}
                                     </span>
                                 </div>
                             </div>
@@ -127,6 +129,8 @@ export default function InterviewDashboard() {
                             onToggleListening={toggleListening}
                             onStopResponse={handleStopResponse}
                             isResponsePlaying={isResponsePlaying}
+                            transcript={transcript}
+                            isMicActive={isMicActive}
                         />
                         {/* Response Generator */}
                         <ResponseGenerator
@@ -166,10 +170,10 @@ export default function InterviewDashboard() {
                             conversations={conversations}
                             onClearHistory={handleClearHistory}
                         />
+                        {/* OpenAI Configuration */}
+                        <OpenAIConfig onConfigChange={setOpenaiConfigured} />
                     </div>
-                    
-                    {/* OpenAI Configuration */}
-                    <OpenAIConfig onConfigChange={setOpenaiConfigured} />
+
                 </div>
             </div>
 
@@ -177,7 +181,7 @@ export default function InterviewDashboard() {
             <div className="bg-gray-50 border-t border-gray-200 mt-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex items-center justify-between text-sm text-gray-600">
-                        <p>Interview Assistant AI - Practice makes perfect! 🎯</p>
+                        <p>AI Interview Copilot</p>
                         <p>Built with React + TypeScript + Tailwind CSS</p>
                     </div>
                 </div>

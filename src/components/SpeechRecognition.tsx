@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Mic, MicOff, Square } from 'lucide-react';
-import { isQuestion } from '../utils/questionDetection';
 
 interface SpeechRecognitionProps {
     onQuestionDetected: (question: string) => void;
@@ -8,73 +7,29 @@ interface SpeechRecognitionProps {
     onToggleListening: () => void;
     onStopResponse?: () => void;
     isResponsePlaying?: boolean;
+    transcript?: string;
+    isMicActive?: boolean;
 }
 
 export default function SpeechRecognition({
-    onQuestionDetected,
     isListening,
     onToggleListening,
     onStopResponse,
-    isResponsePlaying = false
+    isResponsePlaying = false,
+    transcript: externalTranscript,
+    isMicActive = false,
 }: SpeechRecognitionProps) {
-    const [transcript, setTranscript] = useState('');
     const [isSupported, setIsSupported] = useState(false);
-    const recognitionRef = useRef<any>(null);
+
+    // Use external transcript if provided
+    const displayTranscript = externalTranscript || '';
 
     useEffect(() => {
+        // Check if speech recognition is supported
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             setIsSupported(true);
-            const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-            recognitionRef.current = new SpeechRecognition();
-
-            recognitionRef.current.continuous = true;
-            recognitionRef.current.interimResults = true;
-            recognitionRef.current.lang = 'en-US';
-
-            recognitionRef.current.onresult = (event: any) => {
-                let finalTranscript = '';
-
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                    }
-                }
-
-                if (finalTranscript) {
-                    setTranscript(finalTranscript);
-                    // Use the cleaner question detection function
-                    if (isQuestion(finalTranscript)) {
-                        onQuestionDetected(finalTranscript);
-                    }
-                }
-            };
-
-            recognitionRef.current.onerror = (event: any) => {
-                console.error('Speech recognition error:', event.error);
-            };
         }
-
-        return () => {
-            if (recognitionRef.current) {
-                recognitionRef.current.stop();
-            }
-        };
-    }, [onQuestionDetected]);
-
-    useEffect(() => {
-        try {
-            if (recognitionRef.current) {
-                if (isListening) {
-                    recognitionRef.current.start();
-                } else {
-                    recognitionRef.current.stop();
-                }
-            }
-        } catch (error) {
-            console.error('Error starting/stopping speech recognition:', error);
-        }
-    }, [isListening]);
+    }, []);
 
     if (!isSupported) {
         return (
@@ -87,6 +42,7 @@ export default function SpeechRecognition({
             </div>
         );
     }
+
 
     return (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
@@ -111,8 +67,8 @@ export default function SpeechRecognition({
                     <button
                         onClick={onToggleListening}
                         className={`p-3 rounded-full transition-all duration-200 transform hover:scale-105 ${isListening
-                            ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/25'
-                            : 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                            ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                            : 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/25'
                             }`}
                         title={isListening ? 'Stop Listening' : 'Start Listening'}
                     >
@@ -128,8 +84,11 @@ export default function SpeechRecognition({
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
                     <div className={`flex items-center gap-2 text-sm ${isListening ? 'text-green-600' : 'text-gray-500'}`}>
-                        <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                        {isListening ? 'Listening for questions...' : 'Click microphone to start'}
+                        <div className={`w-2 h-2 rounded-full ${isMicActive ? 'bg-green-500' : 'bg-red-500'} ${isListening ? 'animate-pulse' : ''}`} />
+                        {isMicActive
+                            ? (isListening ? 'Listening for questions...' : 'Microphone ready - click to listen')
+                            : 'Initializing microphone...'
+                        }
                     </div>
 
                     {/* Response Status */}
@@ -141,10 +100,10 @@ export default function SpeechRecognition({
                     )}
                 </div>
 
-                {transcript && (
+                {displayTranscript && (
                     <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-red-500">
                         <p className="text-sm text-gray-600 mb-1">Last heard:</p>
-                        <p className="text-gray-800">{transcript}</p>
+                        <p className="text-gray-800">{displayTranscript}</p>
                     </div>
                 )}
             </div>

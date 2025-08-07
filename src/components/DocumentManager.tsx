@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Briefcase, CheckCircle } from 'lucide-react';
+import { Briefcase, CheckCircle, Pencil  } from 'lucide-react';
 import { FileUpload } from './ui/FileUpload';
 import { TextArea } from './ui/TextArea';
 
@@ -133,6 +133,7 @@ export default function DocumentManager({
                                 className="text-purple-600 hover:text-purple-700 text-xs flex items-center gap-1"
                             >
                                 {showJobDescriptionPaste ? 'Hide' : 'Type'}
+                                <Pencil className="h-4 w-4" />
                             </button>
                         </div>
                     </div>
@@ -149,24 +150,6 @@ export default function DocumentManager({
                                 currentText={jobDescription}
                                 colorScheme="purple"
                             />
-
-                            {/* OR Divider */}
-                            <div className="flex items-center gap-4">
-                                <div className="flex-1 border-t border-gray-300"></div>
-                                <span className="text-sm text-gray-500 bg-white px-2">OR</span>
-                                <div className="flex-1 border-t border-gray-300"></div>
-                            </div>
-
-                            {/* Text Input Option */}
-                            <div className="text-center">
-                                <p className="text-sm text-gray-600 mb-3">Type or paste job description</p>
-                                <button
-                                    onClick={() => setShowJobDescriptionPaste(true)}
-                                    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 mx-auto"
-                                >
-                                    Add Job Description
-                                </button>
-                            </div>
                         </div>
                     ) : (
                         <TextArea

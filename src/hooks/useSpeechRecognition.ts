@@ -41,7 +41,7 @@ export const useSpeechRecognition = ({ onQuestionDetected }: UseSpeechRecognitio
             };
 
             recognitionRef.current.onerror = (event: any) => {
-                console.error('Speech recognition error:', event.error);
+                console.log('Speech recognition error:', event.error);
             };
         }
 
@@ -62,7 +62,7 @@ export const useSpeechRecognition = ({ onQuestionDetected }: UseSpeechRecognitio
                 }
             }
         } catch (error) {
-            console.error('Error starting/stopping speech recognition:', error);
+            console.log('Error starting/stopping speech recognition:', error);
         }
     }, [isListening]);
 
