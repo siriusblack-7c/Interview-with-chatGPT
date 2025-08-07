@@ -494,7 +494,7 @@ export default function DocumentManager({
                                         value={additionalContextText}
                                         onChange={(e) => setAdditionalContextText(e.target.value)}
                                         placeholder="Add any additional context, preferences, or specific information that should be considered in responses..."
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                                        className="w-full outline-none p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-100 text-sm"
                                         rows={4}
                                     />
                                     <div className="flex items-center justify-between mt-2">
