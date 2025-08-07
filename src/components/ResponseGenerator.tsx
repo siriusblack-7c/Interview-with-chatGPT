@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Brain, Lightbulb, Clock, CheckCircle, Zap, AlertTriangle } from 'lucide-react';
+import { Brain, Lightbulb, Clock, CheckCircle, Zap, AlertTriangle, Volume2, VolumeX } from 'lucide-react';
 import openaiService from '../services/openai';
+import type { TextToSpeechProps } from './TextToSpeech';
 
 interface ResponseGeneratorProps {
     question: string;
@@ -9,6 +10,8 @@ interface ResponseGeneratorProps {
     resumeText?: string;
     jobDescription?: string;
     additionalContext?: string;
+    onMuteToggle?: (muted: boolean) => void;
+    isMuted?: boolean;
 }
 
 export default function ResponseGenerator({
@@ -17,7 +20,9 @@ export default function ResponseGenerator({
     openaiConfigured = false,
     resumeText = '',
     jobDescription = '',
-    additionalContext = ''
+    additionalContext = '',
+    onMuteToggle,
+    isMuted = false
 }: ResponseGeneratorProps) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentResponse, setCurrentResponse] = useState('');
@@ -106,7 +111,20 @@ export default function ResponseGenerator({
                     <Brain className="h-5 w-5 text-purple-600" />
                     <h3 className="text-lg font-semibold text-gray-800">AI Response Generator</h3>
                 </div>
-                <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-2 text-xs bg-gray-100 rounded-full p-1">
+                    {onMuteToggle && (
+                        <button
+                            onClick={() => onMuteToggle(!isMuted)}
+                            className={`p-1 rounded transition-colors border border-gray-200 rounded-full bg-white ${isMuted ? 'text-red-500 hover:text-red-600' : 'text-green-500 hover:text-green-600'}`}
+                            title={isMuted ? 'Unmute Speech' : 'Mute Speech'}
+                        >
+                            {isMuted ? (
+                                <VolumeX className="h-4 w-4" />
+                            ) : (
+                                <Volume2 className="h-4 w-4" />
+                            )}
+                        </button>
+                    )}
                     {responseSource === 'openai' ? (
                         <div className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full">
                             <Zap className="h-3 w-3" />

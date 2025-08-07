@@ -1,27 +1,25 @@
 import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 
-interface TextToSpeechProps {
+export interface TextToSpeechProps {
     text: string;
     autoPlay?: boolean;
     onStateChange?: (isPlaying: boolean, isMuted: boolean) => void;
 }
 
 export interface TextToSpeechRef {
-    toggleMute: () => void;
     stop: () => void;
     speak: () => void;
+    toggleMute: () => void;
+    setMuted: (muted: boolean) => void;
 }
 
 const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, autoPlay = false, onStateChange }, ref) => {
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
-    const [wasMutedWhenEnded, setWasMutedWhenEnded] = useState(false);
     const [isSupported, setIsSupported] = useState(false);
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [selectedVoice, setSelectedVoice] = useState<number>(0);
     const [rate] = useState(1);
     const [pitch] = useState(1);
+    const [isMuted, setIsMuted] = useState(false);
 
     useEffect(() => {
         if ('speechSynthesis' in window) {
@@ -46,13 +44,13 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
     }, []);
 
     useEffect(() => {
-        if (autoPlay && text && isSupported) {
+        if (autoPlay && text && isSupported && !isMuted) {
             speak();
         }
-    }, [text, autoPlay, isSupported]);
+    }, [text, autoPlay, isSupported, isMuted]);
 
     const speak = () => {
-        if (!text || !isSupported) return;
+        if (!text || !isSupported || isMuted) return;
 
         // Stop any ongoing speech
         speechSynthesis.cancel();
@@ -68,118 +66,56 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
         utterance.volume = 0.8;
 
         utterance.onstart = () => {
-            setIsPlaying(true);
-            setIsPaused(false);
-            setWasMutedWhenEnded(false);
             onStateChange?.(true, isMuted);
         };
 
         utterance.onend = () => {
-            setIsPlaying(false);
-            setIsPaused(false);
-            setWasMutedWhenEnded(isMuted);
             onStateChange?.(false, isMuted);
         };
 
         utterance.onerror = () => {
-            setIsPlaying(false);
-            setIsPaused(false);
             onStateChange?.(false, isMuted);
         };
 
         speechSynthesis.speak(utterance);
     };
 
-    const pause = () => {
-        console.log('Pause called:', {
-            speaking: speechSynthesis.speaking,
-            paused: speechSynthesis.paused
-        });
-        if (speechSynthesis.speaking && !speechSynthesis.paused) {
-            speechSynthesis.pause();
-            setIsPaused(true);
-            onStateChange?.(true, isMuted);
-            console.log('Speech paused successfully');
-        } else {
-            console.log('Cannot pause: not speaking or already paused');
-        }
-    };
-
-    const resume = () => {
-        console.log('Resume called:', {
-            speaking: speechSynthesis.speaking,
-            paused: speechSynthesis.paused
-        });
-        if (speechSynthesis.paused) {
-            speechSynthesis.resume();
-            setIsPaused(false);
-            onStateChange?.(true, isMuted);
-            console.log('Speech resumed successfully');
-        } else {
-            console.log('Cannot resume: not paused');
-        }
-    };
-
     const stop = () => {
         speechSynthesis.cancel();
-        setIsPlaying(false);
-        setIsPaused(false);
         onStateChange?.(false, isMuted);
     };
 
     const toggleMute = () => {
         const newMutedState = !isMuted;
-        console.log('Toggle mute:', {
-            currentMuted: isMuted,
-            newMuted: newMutedState,
-            isPlaying,
-            isPaused,
-            speechSynthesisSpeaking: speechSynthesis.speaking,
-            speechSynthesisPaused: speechSynthesis.paused
-        });
-
         setIsMuted(newMutedState);
 
-        if (newMutedState && isPlaying && !isPaused) {
-            // Mute by pausing
-            console.log('Muting: pausing speech');
-            pause();
-        } else if (!newMutedState && isPaused) {
-            // Unmute by resuming
-            console.log('Unmuting: resuming speech');
-            resume();
-        } else if (!newMutedState && !isPlaying && !isPaused) {
-            // If unmuting but speech has ended, restart the speech
-            console.log('Unmuting: restarting speech');
-            speak();
-        } else if (!newMutedState && isPlaying && isPaused) {
-            // If unmuting and speech is paused, resume it
-            console.log('Unmuting: resuming paused speech');
-            resume();
-        } else if (!newMutedState && !isPlaying && wasMutedWhenEnded) {
-            // If unmuting and speech ended while muted, restart it
-            console.log('Unmuting: restarting speech that ended while muted');
-            setWasMutedWhenEnded(false);
-            speak();
+        if (newMutedState) {
+            // Mute by stopping speech
+            speechSynthesis.cancel();
         }
 
-        // Update state change with current playing state
-        onStateChange?.(isPlaying, newMutedState);
+        onStateChange?.(false, newMutedState);
+    };
+
+    const setMuted = (muted: boolean) => {
+        setIsMuted(muted);
+
+        if (muted) {
+            // Mute by stopping speech
+            speechSynthesis.cancel();
+        }
+
+        onStateChange?.(false, muted);
     };
 
     // Expose functions to parent component
     useImperativeHandle(ref, () => ({
-        toggleMute,
         stop,
-        speak
+        speak,
+        toggleMute,
+        setMuted
     }));
 
-    // Component is now hidden - only used for automatic speech functionality
-    if (!isSupported || !text) {
-        return null;
-    }
-
-    // Component is hidden - only provides automatic speech functionality
     return null;
 });
 

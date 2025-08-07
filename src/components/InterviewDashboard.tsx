@@ -85,8 +85,12 @@ export default function InterviewDashboard() {
         setIsMuted(muted);
     }, []);
 
-    const handleMuteResponse = useCallback(() => {
-        textToSpeechRef.current?.toggleMute();
+    const handleMuteToggle = useCallback((muted: boolean) => {
+        setIsMuted(muted);
+        // Update the TextToSpeech component's mute state
+        if (textToSpeechRef.current) {
+            textToSpeechRef.current.setMuted(muted);
+        }
     }, []);
 
     const handleStopResponse = useCallback(() => {
@@ -156,10 +160,8 @@ export default function InterviewDashboard() {
                             onQuestionDetected={handleQuestionDetected}
                             isListening={isListening}
                             onToggleListening={handleToggleListening}
-                            onMuteResponse={handleMuteResponse}
                             onStopResponse={handleStopResponse}
                             isResponsePlaying={isResponsePlaying}
-                            isMuted={isMuted}
                         />
                         {/* Response Generator */}
                         <ResponseGenerator
@@ -169,6 +171,8 @@ export default function InterviewDashboard() {
                             resumeText={resumeText}
                             jobDescription={jobDescription}
                             additionalContext={additionalContext}
+                            onMuteToggle={handleMuteToggle}
+                            isMuted={isMuted}
                         />
 
                         {/* Hidden Text-to-Speech for automatic playback */}
