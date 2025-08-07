@@ -1,4 +1,4 @@
-import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef, useRef } from 'react';
 import type { TextToSpeechProps, TextToSpeechRef } from '../types/speech';
 
 const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, autoPlay = false, onStateChange }, ref) => {
@@ -8,6 +8,12 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
     const [rate] = useState(1);
     const [pitch] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
+    const isMutedRef = useRef(false);
+
+    // Keep a live ref of mute state to avoid stale closures in event callbacks
+    useEffect(() => {
+        isMutedRef.current = isMuted;
+    }, [isMuted]);
 
     useEffect(() => {
         if ('speechSynthesis' in window) {
@@ -32,10 +38,12 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
     }, []);
 
     useEffect(() => {
-        if (autoPlay && text && isSupported && !isMuted) {
+        // Auto-play only when new text arrives (or autoPlay/isSupported changes),
+        // not when the user toggles mute. Respect current mute ref.
+        if (autoPlay && text && isSupported && !isMutedRef.current) {
             speak();
         }
-    }, [text, autoPlay, isSupported, isMuted]);
+    }, [text, autoPlay, isSupported]);
 
     const speak = () => {
         if (!text || !isSupported || isMuted) return;
@@ -54,15 +62,15 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
         utterance.volume = 0.8;
 
         utterance.onstart = () => {
-            onStateChange?.(true, isMuted);
+            onStateChange?.(true, isMutedRef.current);
         };
 
         utterance.onend = () => {
-            onStateChange?.(false, isMuted);
+            onStateChange?.(false, isMutedRef.current);
         };
 
         utterance.onerror = () => {
-            onStateChange?.(false, isMuted);
+            onStateChange?.(false, isMutedRef.current);
         };
 
         speechSynthesis.speak(utterance);
@@ -70,30 +78,36 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
 
     const stop = () => {
         speechSynthesis.cancel();
-        onStateChange?.(false, isMuted);
+        onStateChange?.(false, isMutedRef.current);
     };
 
     const toggleMute = () => {
-        const newMutedState = !isMuted;
+        const newMutedState = !isMutedRef.current;
         setIsMuted(newMutedState);
+        isMutedRef.current = newMutedState;
 
         if (newMutedState) {
             // Mute by stopping speech
             speechSynthesis.cancel();
+            onStateChange?.(false, newMutedState);
+        } else {
+            // Unmute: do not auto-resume; report current speaking state
+            onStateChange?.(speechSynthesis.speaking, newMutedState);
         }
-
-        onStateChange?.(false, newMutedState);
     };
 
     const setMuted = (muted: boolean) => {
         setIsMuted(muted);
+        isMutedRef.current = muted;
 
         if (muted) {
             // Mute by stopping speech
             speechSynthesis.cancel();
+            onStateChange?.(false, muted);
+        } else {
+            // Do not auto-resume; report current speaking state
+            onStateChange?.(speechSynthesis.speaking, muted);
         }
-
-        onStateChange?.(false, muted);
     };
 
     // Expose functions to parent component

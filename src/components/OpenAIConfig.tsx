@@ -153,14 +153,6 @@ export default function OpenAIConfig({ onConfigChange }: OpenAIConfigProps) {
                     )}
                 </div>
             )}
-
-            {!isConfigured && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">
-                        <strong>Demo Mode:</strong> Using static responses. Configure OpenAI for intelligent AI-powered responses! 🚀
-                    </p>
-                </div>
-            )}
         </div>
     );
 }

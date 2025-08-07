@@ -10,6 +10,8 @@ interface TextAreaProps {
     onClear: () => void;
     showEdit: boolean;
     onToggleEdit: () => void;
+    onSave?: (value: string) => void;
+    onCancel?: () => void;
     colorScheme: 'purple' | 'orange';
     rows?: number;
 }
@@ -40,6 +42,8 @@ export const TextArea: React.FC<TextAreaProps> = ({
     onClear,
     showEdit,
     onToggleEdit,
+    onSave,
+    onCancel,
     colorScheme,
     rows = 4
 }) => {
@@ -82,13 +86,19 @@ export const TextArea: React.FC<TextAreaProps> = ({
                         </span>
                         <div className="flex gap-2">
                             <button
-                                onClick={onToggleEdit}
+                                onClick={() => {
+                                    if (onCancel) onCancel();
+                                    else onToggleEdit();
+                                }}
                                 className="text-gray-600 hover:text-gray-700 px-3 py-1 text-xs"
                             >
                                 Cancel
                             </button>
                             <button
-                                onClick={onToggleEdit}
+                                onClick={() => {
+                                    if (onSave) onSave(value);
+                                    else onToggleEdit();
+                                }}
                                 className={`${colors.button} text-white px-3 py-1 rounded text-xs`}
                                 disabled={!value.trim()}
                             >

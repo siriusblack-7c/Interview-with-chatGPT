@@ -26,6 +26,7 @@ export default function DocumentManager({
     const [showAdditionalContextPaste, setShowAdditionalContextPaste] = useState(false);
     const [jobDescriptionText, setJobDescriptionText] = useState(jobDescription);
     const [additionalContextText, setAdditionalContextText] = useState(additionalContext);
+    const [pendingAdditionalContext, setPendingAdditionalContext] = useState(additionalContext);
 
     const handleResumeUpload = useCallback((text: string, file?: File) => {
         if (file) {
@@ -47,10 +48,22 @@ export default function DocumentManager({
         onJobDescriptionUpdate(text);
     }, [onJobDescriptionUpdate]);
 
+    // Additional context should only be committed on Save
     const handleAdditionalContextChange = useCallback((text: string) => {
+        setPendingAdditionalContext(text);
+    }, []);
+
+    const handleAdditionalContextSave = useCallback((text: string) => {
         setAdditionalContextText(text);
         onAdditionalContextUpdate?.(text);
+        setShowAdditionalContextPaste(false);
     }, [onAdditionalContextUpdate]);
+
+    const handleAdditionalContextCancel = useCallback(() => {
+        // Revert pending edits to the last saved value
+        setPendingAdditionalContext(additionalContextText);
+        setShowAdditionalContextPaste(false);
+    }, [additionalContextText]);
 
     const clearResume = useCallback(() => {
         setResumeFile(null);
@@ -194,11 +207,13 @@ export default function DocumentManager({
                     <TextArea
                         title="Additional Context"
                         placeholder="Add any additional context, preferences, or specific information that should be considered in responses..."
-                        value={additionalContextText}
+                        value={showAdditionalContextPaste ? pendingAdditionalContext : additionalContextText}
                         onChange={handleAdditionalContextChange}
                         onClear={clearAdditionalContext}
                         showEdit={showAdditionalContextPaste}
                         onToggleEdit={() => setShowAdditionalContextPaste(!showAdditionalContextPaste)}
+                        onSave={handleAdditionalContextSave}
+                        onCancel={handleAdditionalContextCancel}
                         colorScheme="orange"
                         rows={4}
                     />
