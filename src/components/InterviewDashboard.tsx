@@ -26,6 +26,7 @@ export default function InterviewDashboard() {
     const { conversations, sessionStats, addQuestion, addResponse, clearHistory } = useConversation();
     const { isListening, toggleListening, transcript, isMicActive } = useMicrophone({
         onQuestionDetected: (question: string) => {
+            console.log('🎤 Question detected in useMicrophone:', question);
             setCurrentQuestion(question);
             addQuestion(question);
         }
@@ -121,10 +122,6 @@ export default function InterviewDashboard() {
                     <div className="space-y-6">
                         {/* Speech Recognition */}
                         <SpeechRecognition
-                            onQuestionDetected={(question: string) => {
-                                setCurrentQuestion(question);
-                                addQuestion(question);
-                            }}
                             isListening={isListening}
                             onToggleListening={toggleListening}
                             onStopResponse={handleStopResponse}

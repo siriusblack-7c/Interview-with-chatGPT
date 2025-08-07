@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Mic, MicOff, Square } from 'lucide-react';
 
 interface SpeechRecognitionProps {
-    onQuestionDetected: (question: string) => void;
+    onQuestionDetected?: (question: string) => void;
     isListening: boolean;
     onToggleListening: () => void;
     onStopResponse?: () => void;

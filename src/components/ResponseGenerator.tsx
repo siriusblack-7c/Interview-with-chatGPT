@@ -29,6 +29,9 @@ export default function ResponseGenerator({
     const [responseSource, setResponseSource] = useState<'openai' | 'none'>('none');
 
     const generateResponse = async (question: string): Promise<string> => {
+        console.log('🔧 generateResponse called with:', question);
+        console.log('🔧 OpenAI configured:', openaiConfigured, openaiService.isConfigured());
+
         setIsGenerating(true);
         setError(null);
 
@@ -61,7 +64,9 @@ export default function ResponseGenerator({
     };
 
     useEffect(() => {
+        console.log('🧠 ResponseGenerator received question:', question);
         if (question) {
+            console.log('🚀 Starting response generation for:', question);
             generateResponse(question);
         }
     }, [question, resumeText, jobDescription, additionalContext]);
