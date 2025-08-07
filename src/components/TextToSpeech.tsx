@@ -16,6 +16,7 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
     const [isPlaying, setIsPlaying] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
+    const [wasMutedWhenEnded, setWasMutedWhenEnded] = useState(false);
     const [isSupported, setIsSupported] = useState(false);
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [selectedVoice, setSelectedVoice] = useState<number>(0);
@@ -69,12 +70,14 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
         utterance.onstart = () => {
             setIsPlaying(true);
             setIsPaused(false);
+            setWasMutedWhenEnded(false);
             onStateChange?.(true, isMuted);
         };
 
         utterance.onend = () => {
             setIsPlaying(false);
             setIsPaused(false);
+            setWasMutedWhenEnded(isMuted);
             onStateChange?.(false, isMuted);
         };
 
@@ -145,6 +148,19 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
             // Unmute by resuming
             console.log('Unmuting: resuming speech');
             resume();
+        } else if (!newMutedState && !isPlaying && !isPaused) {
+            // If unmuting but speech has ended, restart the speech
+            console.log('Unmuting: restarting speech');
+            speak();
+        } else if (!newMutedState && isPlaying && isPaused) {
+            // If unmuting and speech is paused, resume it
+            console.log('Unmuting: resuming paused speech');
+            resume();
+        } else if (!newMutedState && !isPlaying && wasMutedWhenEnded) {
+            // If unmuting and speech ended while muted, restart it
+            console.log('Unmuting: restarting speech that ended while muted');
+            setWasMutedWhenEnded(false);
+            speak();
         }
 
         // Update state change with current playing state

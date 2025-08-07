@@ -56,6 +56,8 @@ export default function SpeechRecognition({
                         finalTranscript.toLowerCase().includes('could') ||
                         finalTranscript.toLowerCase().includes('would') ||
                         finalTranscript.toLowerCase().includes('should') ||
+                        finalTranscript.toLowerCase().includes('do you') ||
+                        finalTranscript.toLowerCase().includes('tell') ||
                         finalTranscript.toLowerCase().includes('might') ||
                         finalTranscript.toLowerCase().includes('may') ||
                         finalTranscript.toLowerCase().includes('must') ||
