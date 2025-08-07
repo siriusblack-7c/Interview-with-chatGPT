@@ -38,8 +38,6 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
     }, []);
 
     useEffect(() => {
-        // Auto-play only when new text arrives (or autoPlay/isSupported changes),
-        // not when the user toggles mute. Respect current mute ref.
         if (autoPlay && text && isSupported && !isMutedRef.current) {
             speak();
         }
@@ -48,7 +46,6 @@ const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, aut
     const speak = () => {
         if (!text || !isSupported || isMuted) return;
 
-        // Stop any ongoing speech
         speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
