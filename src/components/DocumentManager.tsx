@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { Upload, FileText, Briefcase, X, CheckCircle, AlertCircle, Copy, Edit3 } from 'lucide-react';
-import mammoth from 'mammoth';
+import { Briefcase, CheckCircle } from 'lucide-react';
+import { FileUpload } from './ui/FileUpload';
+import { TextArea } from './ui/TextArea';
 
 interface DocumentManagerProps {
     onResumeUpdate: (resumeText: string) => void;
@@ -20,154 +21,53 @@ export default function DocumentManager({
     additionalContext = ''
 }: DocumentManagerProps) {
     const [resumeFile, setResumeFile] = useState<File | null>(null);
-    const [resumeUploading, setResumeUploading] = useState(false);
-    const [resumeError, setResumeError] = useState<string | null>(null);
-
-    const [jobDescriptionText, setJobDescriptionText] = useState(jobDescription);
-    const [showJobDescriptionPaste, setShowJobDescriptionPaste] = useState(false);
     const [jobDescriptionFile, setJobDescriptionFile] = useState<File | null>(null);
-    const [jobDescriptionUploading, setJobDescriptionUploading] = useState(false);
-    const [jobDescriptionError, setJobDescriptionError] = useState<string | null>(null);
-
-    const [additionalContextText, setAdditionalContextText] = useState(additionalContext);
+    const [showJobDescriptionPaste, setShowJobDescriptionPaste] = useState(false);
     const [showAdditionalContextPaste, setShowAdditionalContextPaste] = useState(false);
+    const [jobDescriptionText, setJobDescriptionText] = useState(jobDescription);
+    const [additionalContextText, setAdditionalContextText] = useState(additionalContext);
 
-    // Resume file upload handler
-    const handleResumeUpload = useCallback(async (file: File) => {
-        setResumeUploading(true);
-        setResumeError(null);
-
-        try {
-            const text = await extractTextFromFile(file);
+    const handleResumeUpload = useCallback((text: string, file?: File) => {
+        if (file) {
             setResumeFile(file);
-            onResumeUpdate(text);
-        } catch (error: any) {
-            setResumeError(error.message);
-        } finally {
-            setResumeUploading(false);
         }
+        onResumeUpdate(text);
     }, [onResumeUpdate]);
 
-    // Extract text from uploaded file
-    const extractTextFromFile = async (file: File): Promise<string> => {
-        const fileType = file.type;
-        const fileName = file.name.toLowerCase();
-
-        if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
-            return await file.text();
-        }
-        else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
-            try {
-                // Convert file to ArrayBuffer for mammoth
-                const arrayBuffer = await file.arrayBuffer();
-
-                // Parse Word document using mammoth
-                const result = await mammoth.extractRawText({ arrayBuffer });
-
-                if (result.messages.length > 0) {
-                    console.warn('Mammoth warnings:', result.messages);
-                }
-
-                return result.value || 'No text content found in the document.';
-            } catch (error: any) {
-                console.error('Error parsing Word document:', error);
-                throw new Error(`Failed to parse Word document: ${error.message}. Please try copying and pasting the text instead.`);
-            }
-        }
-        else if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
-            // For PDF files, we'll provide instructions for manual extraction
-            throw new Error('PDF parsing requires additional setup. Please copy and paste your resume text for now.');
-        }
-        else {
-            throw new Error('Unsupported file type. Please use .txt, .doc, or .docx files or copy and paste your resume text.');
-        }
-    };
-
-    // File drop handler
-    const handleFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        const files = Array.from(e.dataTransfer.files);
-        if (files.length > 0) {
-            handleResumeUpload(files[0]);
-        }
-    }, [handleResumeUpload]);
-
-    // File input change handler
-    const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-            handleResumeUpload(files[0]);
-        }
-    }, [handleResumeUpload]);
-
-    // Job description file upload handler
-    const handleJobDescriptionUpload = useCallback(async (file: File) => {
-        setJobDescriptionUploading(true);
-        setJobDescriptionError(null);
-
-        try {
-            const text = await extractTextFromFile(file);
+    const handleJobDescriptionUpload = useCallback((text: string, file?: File) => {
+        if (file) {
             setJobDescriptionFile(file);
-            setJobDescriptionText(text);
-            onJobDescriptionUpdate(text);
-        } catch (error: any) {
-            setJobDescriptionError(error.message);
-        } finally {
-            setJobDescriptionUploading(false);
         }
+        setJobDescriptionText(text);
+        onJobDescriptionUpdate(text);
     }, [onJobDescriptionUpdate]);
 
-    // Job description text handlers
     const handleJobDescriptionChange = useCallback((text: string) => {
         setJobDescriptionText(text);
         onJobDescriptionUpdate(text);
     }, [onJobDescriptionUpdate]);
 
-    // Job description file input change handler
-    const handleJobDescriptionFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-            handleJobDescriptionUpload(files[0]);
-        }
-    }, [handleJobDescriptionUpload]);
+    const handleAdditionalContextChange = useCallback((text: string) => {
+        setAdditionalContextText(text);
+        onAdditionalContextUpdate?.(text);
+    }, [onAdditionalContextUpdate]);
 
-    // Job description file drop handler
-    const handleJobDescriptionFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        const files = Array.from(e.dataTransfer.files);
-        if (files.length > 0) {
-            handleJobDescriptionUpload(files[0]);
-        }
-    }, [handleJobDescriptionUpload]);
-
-    const clearResume = () => {
+    const clearResume = useCallback(() => {
         setResumeFile(null);
-        setResumeError(null);
         onResumeUpdate('');
-    };
+    }, [onResumeUpdate]);
 
-    const clearJobDescription = () => {
+    const clearJobDescription = useCallback(() => {
         setJobDescriptionText('');
         setJobDescriptionFile(null);
-        setJobDescriptionError(null);
         onJobDescriptionUpdate('');
-    };
+    }, [onJobDescriptionUpdate]);
 
-    const clearAdditionalContext = () => {
+    const clearAdditionalContext = useCallback(() => {
         setAdditionalContextText('');
         setShowAdditionalContextPaste(false);
         onAdditionalContextUpdate?.('');
-    };
-
-    // Copy to clipboard functionality
-    const copyToClipboard = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            // Could add a toast notification here
-        } catch (error) {
-            console.error('Failed to copy text:', error);
-        }
-    };
+    }, [onAdditionalContextUpdate]);
 
     return (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
@@ -195,90 +95,21 @@ export default function DocumentManager({
                 <div>
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-blue-600" />
+                            <Briefcase className="h-4 w-4 text-blue-600" />
                             Resume
                         </h4>
-                        {resumeFile && (
-                            <button
-                                onClick={clearResume}
-                                className="text-red-600 hover:text-red-700 text-xs flex items-center gap-1"
-                            >
-                                <X className="h-3 w-3" />
-                                Clear
-                            </button>
-                        )}
                     </div>
 
-                    {!resumeFile ? (
-                        <div
-                            onDrop={handleFileDrop}
-                            onDragOver={(e) => e.preventDefault()}
-                            className="border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors rounded-lg p-6 text-center cursor-pointer"
-                        >
-                            <input
-                                type="file"
-                                accept=".txt,.doc,.pdf,.docx"
-                                onChange={handleFileInputChange}
-                                className="hidden"
-                                id="resume-upload"
-                                disabled={resumeUploading}
-                            />
-                            <label htmlFor="resume-upload" className="cursor-pointer">
-                                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                                <p className="text-sm text-gray-600 mb-1">
-                                    {resumeUploading ? 'Processing...' : 'Drop your resume here or click to upload'}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    Supports: .txt, .doc, .docx files
-                                </p>
-                            </label>
-                        </div>
-                    ) : (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-green-600" />
-                                    <span className="text-sm font-medium text-green-800">
-                                        {resumeFile.name}
-                                    </span>
-                                    <span className="text-xs text-green-600">
-                                        ({(resumeFile.size / 1024).toFixed(1)} KB)
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => copyToClipboard(resumeText)}
-                                        className="text-green-600 hover:text-green-700 p-1"
-                                        title="Copy resume text"
-                                    >
-                                        <Copy className="h-3 w-3" />
-                                    </button>
-                                    <button
-                                        onClick={clearResume}
-                                        className="text-red-600 hover:text-red-700 p-1"
-                                        title="Remove resume"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </div>
-                            </div>
-                            {resumeText && (
-                                <div className="mt-2 text-xs text-green-700">
-                                    ✓ Resume content extracted ({resumeText.length} characters)
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {resumeError && (
-                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <div className="flex items-center gap-2">
-                                <AlertCircle className="h-4 w-4 text-red-600" />
-                                <span className="text-sm font-medium text-red-800">Upload Error</span>
-                            </div>
-                            <p className="text-sm text-red-700 mt-1">{resumeError}</p>
-                        </div>
-                    )}
+                    <FileUpload
+                        title="Resume"
+                        description="Drop your resume here or click to upload"
+                        acceptedFileTypes={['.txt', '.doc', '.docx']}
+                        onFileUpload={handleResumeUpload}
+                        onClear={clearResume}
+                        currentFile={resumeFile}
+                        currentText={resumeText}
+                        colorScheme="blue"
+                    />
                 </div>
 
                 {/* Job Description Section */}
@@ -294,7 +125,6 @@ export default function DocumentManager({
                                     onClick={clearJobDescription}
                                     className="text-red-600 hover:text-red-700 text-xs flex items-center gap-1"
                                 >
-                                    <X className="h-3 w-3" />
                                     Clear
                                 </button>
                             )}
@@ -302,7 +132,6 @@ export default function DocumentManager({
                                 onClick={() => setShowJobDescriptionPaste(!showJobDescriptionPaste)}
                                 className="text-purple-600 hover:text-purple-700 text-xs flex items-center gap-1"
                             >
-                                <Edit3 className="h-3 w-3" />
                                 {showJobDescriptionPaste ? 'Hide' : 'Type'}
                             </button>
                         </div>
@@ -310,30 +139,16 @@ export default function DocumentManager({
 
                     {!jobDescription && !showJobDescriptionPaste ? (
                         <div className="space-y-4">
-                            {/* File Upload Option */}
-                            <div
-                                onDrop={handleJobDescriptionFileDrop}
-                                onDragOver={(e) => e.preventDefault()}
-                                className="border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors rounded-lg p-6 text-center cursor-pointer"
-                            >
-                                <input
-                                    type="file"
-                                    accept=".txt,.doc,.pdf,.docx"
-                                    onChange={handleJobDescriptionFileChange}
-                                    className="hidden"
-                                    id="job-description-upload"
-                                    disabled={jobDescriptionUploading}
-                                />
-                                <label htmlFor="job-description-upload" className="cursor-pointer">
-                                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                                    <p className="text-sm text-gray-600 mb-1">
-                                        {jobDescriptionUploading ? 'Processing...' : 'Drop job description file here or click to upload'}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        Supports: .txt, .doc, .docx files
-                                    </p>
-                                </label>
-                            </div>
+                            <FileUpload
+                                title="Job Description"
+                                description="Drop job description file here or click to upload"
+                                acceptedFileTypes={['.txt', '.doc', '.docx']}
+                                onFileUpload={handleJobDescriptionUpload}
+                                onClear={clearJobDescription}
+                                currentFile={jobDescriptionFile}
+                                currentText={jobDescription}
+                                colorScheme="purple"
+                            />
 
                             {/* OR Divider */}
                             <div className="flex items-center gap-4">
@@ -349,102 +164,22 @@ export default function DocumentManager({
                                     onClick={() => setShowJobDescriptionPaste(true)}
                                     className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 mx-auto"
                                 >
-                                    <Edit3 className="h-4 w-4" />
                                     Add Job Description
                                 </button>
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-3">
-                            {showJobDescriptionPaste && (
-                                <div>
-                                    <textarea
-                                        value={jobDescriptionText}
-                                        onChange={(e) => handleJobDescriptionChange(e.target.value)}
-                                        placeholder="Paste the job description here..."
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
-                                        rows={6}
-                                    />
-                                    <div className="flex items-center justify-between mt-2">
-                                        <span className="text-xs text-gray-500">
-                                            {jobDescriptionText.length} characters
-                                        </span>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => setShowJobDescriptionPaste(false)}
-                                                className="text-gray-600 hover:text-gray-700 px-3 py-1 text-xs"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    handleJobDescriptionChange(jobDescriptionText);
-                                                    setShowJobDescriptionPaste(false);
-                                                }}
-                                                className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs"
-                                                disabled={!jobDescriptionText.trim()}
-                                            >
-                                                Save
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {jobDescription && !showJobDescriptionPaste && (
-                                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Briefcase className="h-4 w-4 text-purple-600" />
-                                            <span className="text-sm font-medium text-purple-800">
-                                                {jobDescriptionFile ? `File: ${jobDescriptionFile.name}` : 'Job Description Loaded'}
-                                            </span>
-                                            {jobDescriptionFile && (
-                                                <span className="text-xs text-purple-600">
-                                                    ({(jobDescriptionFile.size / 1024).toFixed(1)} KB)
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => copyToClipboard(jobDescription)}
-                                                className="text-purple-600 hover:text-purple-700 p-1"
-                                                title="Copy job description"
-                                            >
-                                                <Copy className="h-3 w-3" />
-                                            </button>
-                                            <button
-                                                onClick={() => setShowJobDescriptionPaste(true)}
-                                                className="text-purple-600 hover:text-purple-700 p-1"
-                                                title="Edit job description"
-                                            >
-                                                <Edit3 className="h-3 w-3" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-purple-700">
-                                        ✓ {jobDescription.length} characters •
-                                        {jobDescriptionFile ? ' Uploaded from file' : ' Entered manually'} •
-                                        Click edit to modify
-                                    </div>
-                                    <div className="mt-2 text-xs text-purple-600 bg-purple-100 rounded p-2 max-h-20 overflow-y-auto">
-                                        {jobDescription.substring(0, 200)}
-                                        {jobDescription.length > 200 && '...'}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Job Description Upload Error */}
-                    {jobDescriptionError && (
-                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <div className="flex items-center gap-2">
-                                <AlertCircle className="h-4 w-4 text-red-600" />
-                                <span className="text-sm font-medium text-red-800">Upload Error</span>
-                            </div>
-                            <p className="text-sm text-red-700 mt-1">{jobDescriptionError}</p>
-                        </div>
+                        <TextArea
+                            title="Job Description"
+                            placeholder="Paste the job description here..."
+                            value={jobDescriptionText}
+                            onChange={handleJobDescriptionChange}
+                            onClear={clearJobDescription}
+                            showEdit={showJobDescriptionPaste}
+                            onToggleEdit={() => setShowJobDescriptionPaste(!showJobDescriptionPaste)}
+                            colorScheme="purple"
+                            rows={6}
+                        />
                     )}
                 </div>
 
@@ -452,7 +187,7 @@ export default function DocumentManager({
                 <div>
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <Edit3 className="h-4 w-4 text-orange-600" />
+                            <Briefcase className="h-4 w-4 text-orange-600" />
                             Additional Context
                         </h4>
                         <div className="flex items-center gap-2">
@@ -461,7 +196,6 @@ export default function DocumentManager({
                                     onClick={clearAdditionalContext}
                                     className="text-red-600 hover:text-red-700 text-xs flex items-center gap-1"
                                 >
-                                    <X className="h-3 w-3" />
                                     Clear
                                 </button>
                             )}
@@ -469,97 +203,22 @@ export default function DocumentManager({
                                 onClick={() => setShowAdditionalContextPaste(!showAdditionalContextPaste)}
                                 className="text-orange-600 hover:text-orange-700 text-xs flex items-center gap-1"
                             >
-                                <Edit3 className="h-3 w-3" />
                                 {showAdditionalContextPaste ? 'Hide' : 'Add'}
                             </button>
                         </div>
                     </div>
 
-                    {!additionalContext && !showAdditionalContextPaste ? (
-                        <div className="text-center">
-                            <p className="text-sm text-gray-600 mb-3">Add any additional context for better responses</p>
-                            <button
-                                onClick={() => setShowAdditionalContextPaste(true)}
-                                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 mx-auto"
-                            >
-                                <Edit3 className="h-4 w-4" />
-                                Add Context
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {showAdditionalContextPaste && (
-                                <div>
-                                    <textarea
-                                        value={additionalContextText}
-                                        onChange={(e) => setAdditionalContextText(e.target.value)}
-                                        placeholder="Add any additional context, preferences, or specific information that should be considered in responses..."
-                                        className="w-full outline-none p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-100 text-sm"
-                                        rows={4}
-                                    />
-                                    <div className="flex items-center justify-between mt-2">
-                                        <span className="text-xs text-gray-500">
-                                            {additionalContextText.length} characters
-                                        </span>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => setShowAdditionalContextPaste(false)}
-                                                className="text-gray-600 hover:text-gray-700 px-3 py-1 text-xs"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    onAdditionalContextUpdate?.(additionalContextText);
-                                                    setShowAdditionalContextPaste(false);
-                                                }}
-                                                className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs"
-                                                disabled={!additionalContextText.trim()}
-                                            >
-                                                Save
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {additionalContext && !showAdditionalContextPaste && (
-                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Edit3 className="h-4 w-4 text-orange-600" />
-                                            <span className="text-sm font-medium text-orange-800">
-                                                Additional Context Loaded
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => copyToClipboard(additionalContext)}
-                                                className="text-orange-600 hover:text-orange-700 p-1"
-                                                title="Copy additional context"
-                                            >
-                                                <Copy className="h-3 w-3" />
-                                            </button>
-                                            <button
-                                                onClick={() => setShowAdditionalContextPaste(true)}
-                                                className="text-orange-600 hover:text-orange-700 p-1"
-                                                title="Edit additional context"
-                                            >
-                                                <Edit3 className="h-3 w-3" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-orange-700">
-                                        ✓ {additionalContext.length} characters • Entered manually • Click edit to modify
-                                    </div>
-                                    <div className="mt-2 text-xs text-orange-600 bg-orange-100 rounded p-2 max-h-20 overflow-y-auto">
-                                        {additionalContext.substring(0, 200)}
-                                        {additionalContext.length > 200 && '...'}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    <TextArea
+                        title="Additional Context"
+                        placeholder="Add any additional context, preferences, or specific information that should be considered in responses..."
+                        value={additionalContextText}
+                        onChange={handleAdditionalContextChange}
+                        onClear={clearAdditionalContext}
+                        showEdit={showAdditionalContextPaste}
+                        onToggleEdit={() => setShowAdditionalContextPaste(!showAdditionalContextPaste)}
+                        colorScheme="orange"
+                        rows={4}
+                    />
                 </div>
 
                 {/* Context Summary */}

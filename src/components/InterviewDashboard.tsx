@@ -3,82 +3,44 @@ import { Briefcase, BarChart3, Zap } from 'lucide-react';
 import SpeechRecognition from './SpeechRecognition';
 import ResponseGenerator from './ResponseGenerator';
 import ConversationHistory from './ConversationHistory';
-import TextToSpeech, { type TextToSpeechRef } from './TextToSpeech';
+import TextToSpeech from './TextToSpeech';
 import OpenAIConfig from './OpenAIConfig';
 import DocumentManager from './DocumentManager';
-
-interface ConversationItem {
-    id: string;
-    type: 'question' | 'response';
-    content: string;
-    timestamp: Date;
-}
+import { useConversation } from '../hooks/useConversation';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import type { TextToSpeechRef } from '../types/speech';
 
 export default function InterviewDashboard() {
-    const [isListening, setIsListening] = useState(false);
     const [currentQuestion, setCurrentQuestion] = useState('');
     const [currentResponse, setCurrentResponse] = useState('');
-    const [conversations, setConversations] = useState<ConversationItem[]>([]);
     const [openaiConfigured, setOpenaiConfigured] = useState(false);
     const [isResponsePlaying, setIsResponsePlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [resumeText, setResumeText] = useState('');
     const [jobDescription, setJobDescription] = useState('');
     const [additionalContext, setAdditionalContext] = useState('');
-    const [sessionStats, setSessionStats] = useState({
-        questionsAnswered: 0,
-        avgResponseTime: 0,
-        sessionDuration: 0
-    });
 
     const textToSpeechRef = useRef<TextToSpeechRef>(null);
 
-    const handleQuestionDetected = useCallback((question: string) => {
-        setCurrentQuestion(question);
-
-        // Add question to conversation history
-        const questionItem: ConversationItem = {
-            id: `q-${Date.now()}`,
-            type: 'question',
-            content: question,
-            timestamp: new Date()
-        };
-
-        setConversations(prev => [...prev, questionItem]);
-        setSessionStats(prev => ({
-            ...prev,
-            questionsAnswered: prev.questionsAnswered + 1
-        }));
-    }, []);
+    // Custom hooks
+    const { conversations, sessionStats, addQuestion, addResponse, clearHistory } = useConversation();
+    const { isListening, toggleListening } = useSpeechRecognition({
+        onQuestionDetected: (question: string) => {
+            setCurrentQuestion(question);
+            addQuestion(question);
+        }
+    });
 
     const handleResponseGenerated = useCallback((response: string) => {
         setCurrentResponse(response);
-
-        // Add response to conversation history
-        const responseItem: ConversationItem = {
-            id: `r-${Date.now()}`,
-            type: 'response',
-            content: response,
-            timestamp: new Date()
-        };
-
-        setConversations(prev => [...prev, responseItem]);
-    }, []);
-
-    const handleToggleListening = useCallback(() => {
-        setIsListening(prev => !prev);
-    }, []);
+        addResponse(response);
+    }, [addResponse]);
 
     const handleClearHistory = useCallback(() => {
-        setConversations([]);
+        clearHistory();
         setCurrentQuestion('');
         setCurrentResponse('');
-        setSessionStats({
-            questionsAnswered: 0,
-            avgResponseTime: 0,
-            sessionDuration: 0
-        });
-    }, []);
+    }, [clearHistory]);
 
     const handleSpeechStateChange = useCallback((playing: boolean, muted: boolean) => {
         setIsResponsePlaying(playing);
@@ -157,9 +119,12 @@ export default function InterviewDashboard() {
                     <div className="space-y-6">
                         {/* Speech Recognition */}
                         <SpeechRecognition
-                            onQuestionDetected={handleQuestionDetected}
+                            onQuestionDetected={(question: string) => {
+                                setCurrentQuestion(question);
+                                addQuestion(question);
+                            }}
                             isListening={isListening}
-                            onToggleListening={handleToggleListening}
+                            onToggleListening={toggleListening}
                             onStopResponse={handleStopResponse}
                             isResponsePlaying={isResponsePlaying}
                         />

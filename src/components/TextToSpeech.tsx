@@ -1,17 +1,5 @@
 import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
-
-export interface TextToSpeechProps {
-    text: string;
-    autoPlay?: boolean;
-    onStateChange?: (isPlaying: boolean, isMuted: boolean) => void;
-}
-
-export interface TextToSpeechRef {
-    stop: () => void;
-    speak: () => void;
-    toggleMute: () => void;
-    setMuted: (muted: boolean) => void;
-}
+import type { TextToSpeechProps, TextToSpeechRef } from '../types/speech';
 
 const TextToSpeech = forwardRef<TextToSpeechRef, TextToSpeechProps>(({ text, autoPlay = false, onStateChange }, ref) => {
     const [isSupported, setIsSupported] = useState(false);

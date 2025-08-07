@@ -30,6 +30,26 @@ interface SpeechRecognitionAlternative {
     confidence: number;
 }
 
+interface ConversationItem {
+    id: string;
+    type: 'question' | 'response';
+    content: string;
+    timestamp: Date;
+}
+
+export interface TextToSpeechProps {
+    text: string;
+    autoPlay?: boolean;
+    onStateChange?: (isPlaying: boolean, isMuted: boolean) => void;
+}
+
+export interface TextToSpeechRef {
+    stop: () => void;
+    speak: () => void;
+    toggleMute: () => void;
+    setMuted: (muted: boolean) => void;
+}
+
 declare class SpeechRecognition extends EventTarget {
     continuous: boolean;
     grammars: SpeechGrammarList;

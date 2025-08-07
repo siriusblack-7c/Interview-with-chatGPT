@@ -1,0 +1,109 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+
+interface UseSpeechRecognitionOptions {
+    onQuestionDetected: (question: string) => void;
+}
+
+export const useSpeechRecognition = ({ onQuestionDetected }: UseSpeechRecognitionOptions) => {
+    const [isListening, setIsListening] = useState(false);
+    const [isSupported, setIsSupported] = useState(false);
+    const [transcript, setTranscript] = useState('');
+    const recognitionRef = useRef<any>(null);
+
+    useEffect(() => {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            setIsSupported(true);
+            const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+            recognitionRef.current = new SpeechRecognition();
+
+            recognitionRef.current.continuous = true;
+            recognitionRef.current.interimResults = true;
+            recognitionRef.current.lang = 'en-US';
+
+            recognitionRef.current.onresult = (event: any) => {
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    }
+                }
+
+                if (finalTranscript) {
+                    setTranscript(finalTranscript);
+                    // Detect if it's a question
+                    if (finalTranscript.trim().endsWith('?') ||
+                        finalTranscript.toLowerCase().includes('what') ||
+                        finalTranscript.toLowerCase().includes('how') ||
+                        finalTranscript.toLowerCase().includes('why') ||
+                        finalTranscript.toLowerCase().includes('when') ||
+                        finalTranscript.toLowerCase().includes('can') ||
+                        finalTranscript.toLowerCase().includes('could') ||
+                        finalTranscript.toLowerCase().includes('would') ||
+                        finalTranscript.toLowerCase().includes('should') ||
+                        finalTranscript.toLowerCase().includes('do you') ||
+                        finalTranscript.toLowerCase().includes('tell') ||
+                        finalTranscript.toLowerCase().includes('might') ||
+                        finalTranscript.toLowerCase().includes('may') ||
+                        finalTranscript.toLowerCase().includes('must') ||
+                        finalTranscript.toLowerCase().includes('need') ||
+                        finalTranscript.toLowerCase().includes('have') ||
+                        finalTranscript.toLowerCase().includes('do') ||
+                        finalTranscript.toLowerCase().includes('does') ||
+                        finalTranscript.toLowerCase().includes('did') ||
+                        finalTranscript.toLowerCase().includes('will') ||
+                        finalTranscript.toLowerCase().includes('please') ||
+                        finalTranscript.toLowerCase().includes('where')) {
+                        onQuestionDetected(finalTranscript);
+                    }
+                }
+            };
+
+            recognitionRef.current.onerror = (event: any) => {
+                console.error('Speech recognition error:', event.error);
+            };
+        }
+
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+    }, [onQuestionDetected]);
+
+    useEffect(() => {
+        try {
+            if (recognitionRef.current) {
+                if (isListening) {
+                    recognitionRef.current.start();
+                } else {
+                    recognitionRef.current.stop();
+                }
+            }
+        } catch (error) {
+            console.error('Error starting/stopping speech recognition:', error);
+        }
+    }, [isListening]);
+
+    const toggleListening = useCallback(() => {
+        setIsListening(prev => !prev);
+    }, []);
+
+    const startListening = useCallback(() => {
+        setIsListening(true);
+    }, []);
+
+    const stopListening = useCallback(() => {
+        setIsListening(false);
+    }, []);
+
+    return {
+        isListening,
+        isSupported,
+        transcript,
+        toggleListening,
+        startListening,
+        stopListening
+    };
+};
