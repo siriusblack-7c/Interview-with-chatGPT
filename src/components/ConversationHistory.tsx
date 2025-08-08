@@ -1,4 +1,5 @@
 import { MessageCircle, User, Bot, Clock } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 interface ConversationItem {
     id: string;
@@ -13,6 +14,8 @@ interface ConversationHistoryProps {
 }
 
 export default function ConversationHistory({ conversations, onClearHistory }: ConversationHistoryProps) {
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
     const formatTime = (date: Date) => {
         return date.toLocaleTimeString('en-US', {
             hour: '2-digit',
@@ -20,6 +23,13 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
             second: '2-digit'
         });
     };
+
+    // Auto-scroll to bottom when new messages are added
+    useEffect(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        }
+    }, [conversations]);
 
     return (
         <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6 h-[calc(100vh-300px)] flex flex-col">
@@ -38,7 +48,10 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+            >
                 {conversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
                         <MessageCircle className="h-12 w-12 text-gray-300 mb-3" />
