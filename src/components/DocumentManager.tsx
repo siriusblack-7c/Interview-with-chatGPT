@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Briefcase, CheckCircle, Pencil, FileText, NotebookPen, FolderCheck } from 'lucide-react';
+import { Briefcase, CheckCircle, Pencil, FileText, NotebookPen, FolderCheck, Sparkles } from 'lucide-react';
 import { FileUpload } from './ui/FileUpload';
 import { TextArea } from './ui/TextArea';
+import JobDescriptionGenerator from './ui/JobDescriptionGenerator';
 
 interface DocumentManagerProps {
     onResumeUpdate: (resumeText: string) => void;
@@ -24,6 +25,7 @@ export default function DocumentManager({
     const [jobDescriptionFile, setJobDescriptionFile] = useState<File | null>(null);
     const [showJobDescriptionPaste, setShowJobDescriptionPaste] = useState(false);
     const [showAdditionalContextPaste, setShowAdditionalContextPaste] = useState(false);
+    const [showJobDescriptionGenerator, setShowJobDescriptionGenerator] = useState(false);
     const [jobDescriptionText, setJobDescriptionText] = useState(jobDescription);
     const [additionalContextText, setAdditionalContextText] = useState(additionalContext);
     const [pendingAdditionalContext, setPendingAdditionalContext] = useState(additionalContext);
@@ -82,6 +84,12 @@ export default function DocumentManager({
         onAdditionalContextUpdate?.('');
     }, [onAdditionalContextUpdate]);
 
+    const handleJobDescriptionGenerated = useCallback((description: string) => {
+        setJobDescriptionText(description);
+        onJobDescriptionUpdate(description);
+        setShowJobDescriptionPaste(true);
+    }, [onJobDescriptionUpdate]);
+
     return (
         <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6">
             <div className="flex items-center gap-2 mb-6">
@@ -104,6 +112,46 @@ export default function DocumentManager({
             </div>
 
             <div className="space-y-6">
+
+                {/* Additional Context Section */}
+                <div>
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-gray-200 flex items-center gap-2">
+                            <NotebookPen className="h-4 w-4 text-orange-600" />
+                            Additional Context
+                        </h4>
+                        <div className="flex items-center gap-2">
+                            {additionalContext && (
+                                <button
+                                    onClick={clearAdditionalContext}
+                                    className="text-red-600 hover:text-red-700 text-xs flex items-center gap-1"
+                                >
+                                    Clear
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setShowAdditionalContextPaste(!showAdditionalContextPaste)}
+                                className="text-orange-600 hover:text-orange-700 text-xs flex items-center gap-1"
+                            >
+                                {showAdditionalContextPaste ? 'Hide' : 'Add'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <TextArea
+                        title="Additional Context"
+                        placeholder="Add any additional context, preferences, or specific information that should be considered in responses..."
+                        value={showAdditionalContextPaste ? pendingAdditionalContext : additionalContextText}
+                        onChange={handleAdditionalContextChange}
+                        onClear={clearAdditionalContext}
+                        showEdit={showAdditionalContextPaste}
+                        onToggleEdit={() => setShowAdditionalContextPaste(!showAdditionalContextPaste)}
+                        onSave={handleAdditionalContextSave}
+                        onCancel={handleAdditionalContextCancel}
+                        colorScheme="orange"
+                        rows={4}
+                    />
+                </div>
                 {/* Resume Upload Section */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
@@ -142,6 +190,14 @@ export default function DocumentManager({
                                 </button>
                             )}
                             <button
+                                onClick={() => setShowJobDescriptionGenerator(true)}
+                                className="text-purple-600 hover:text-purple-700 text-xs flex items-center gap-1"
+                                title="Generate with AI"
+                            >
+                                <Sparkles className="h-4 w-4" />
+                                AI Generate
+                            </button>
+                            <button
                                 onClick={() => setShowJobDescriptionPaste(!showJobDescriptionPaste)}
                                 className="text-purple-600 hover:text-purple-700 text-xs flex items-center gap-1"
                             >
@@ -179,45 +235,6 @@ export default function DocumentManager({
                     )}
                 </div>
 
-                {/* Additional Context Section */}
-                <div>
-                    <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-sm font-medium text-gray-200 flex items-center gap-2">
-                            <NotebookPen className="h-4 w-4 text-orange-600" />
-                            Additional Context
-                        </h4>
-                        <div className="flex items-center gap-2">
-                            {additionalContext && (
-                                <button
-                                    onClick={clearAdditionalContext}
-                                    className="text-red-600 hover:text-red-700 text-xs flex items-center gap-1"
-                                >
-                                    Clear
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setShowAdditionalContextPaste(!showAdditionalContextPaste)}
-                                className="text-orange-600 hover:text-orange-700 text-xs flex items-center gap-1"
-                            >
-                                {showAdditionalContextPaste ? 'Hide' : 'Add'}
-                            </button>
-                        </div>
-                    </div>
-
-                    <TextArea
-                        title="Additional Context"
-                        placeholder="Add any additional context, preferences, or specific information that should be considered in responses..."
-                        value={showAdditionalContextPaste ? pendingAdditionalContext : additionalContextText}
-                        onChange={handleAdditionalContextChange}
-                        onClear={clearAdditionalContext}
-                        showEdit={showAdditionalContextPaste}
-                        onToggleEdit={() => setShowAdditionalContextPaste(!showAdditionalContextPaste)}
-                        onSave={handleAdditionalContextSave}
-                        onCancel={handleAdditionalContextCancel}
-                        colorScheme="orange"
-                        rows={4}
-                    />
-                </div>
 
                 {/* Context Summary */}
                 {(resumeText || jobDescription || additionalContext) && (
@@ -234,6 +251,14 @@ export default function DocumentManager({
                     </div>
                 )}
             </div>
+
+            {/* AI Job Description Generator Modal */}
+            {showJobDescriptionGenerator && (
+                <JobDescriptionGenerator
+                    onJobDescriptionGenerated={handleJobDescriptionGenerated}
+                    onClose={() => setShowJobDescriptionGenerator(false)}
+                />
+            )}
         </div>
     );
 }

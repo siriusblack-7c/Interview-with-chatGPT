@@ -330,6 +330,81 @@ Generate follow-up questions that dive deeper into the topic or explore related 
         }
     }
 
+    async generateJobDescription(
+        jobTitle: string,
+        industry?: string,
+        companyName?: string,
+        companySize?: string,
+        experienceLevel?: string,
+        keySkills?: string[]
+    ): Promise<string> {
+        if (!this.isConfigured()) {
+            throw new Error('OpenAI API key not configured for job description generation');
+        }
+
+        try {
+            const systemPrompt = `You are an expert HR professional and job description writer. Create a comprehensive, professional job description based on the provided information.
+
+Guidelines:
+- Write in a clear, professional tone
+- Include all standard job description sections (Overview, Responsibilities, Requirements, Benefits)
+- Make it realistic and detailed
+- Use industry-standard terminology
+- Include both required and preferred qualifications
+- Add a competitive salary range when appropriate
+- Include company culture and work environment details
+- Make it engaging and attractive to candidates
+- Keep it comprehensive but not overly lengthy (aim for 300-500 words)`;
+
+            let userPrompt = `Create a detailed job description for: ${jobTitle}`;
+
+            if (industry) {
+                userPrompt += `\nIndustry: ${industry}`;
+            }
+            if (companyName) {
+                userPrompt += `\nCompany Name: ${companyName}`;
+            }
+            if (companySize) {
+                userPrompt += `\nCompany Size: ${companySize}`;
+            }
+            if (experienceLevel) {
+                userPrompt += `\nExperience Level: ${experienceLevel}`;
+            }
+            if (keySkills && keySkills.length > 0) {
+                userPrompt += `\nKey Skills Required: ${keySkills.join(', ')}`;
+            }
+
+            userPrompt += `\n\nPlease provide a complete job description with the following structure:
+1. Job Title and Overview
+2. Key Responsibilities
+3. Required Qualifications
+4. Preferred Qualifications
+5. Benefits and Perks
+6. Company Culture/Work Environment`;
+
+            const response = await this.client!.chat.completions.create({
+                model: this.config.model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                max_tokens: 1500,
+                temperature: 0.7
+            });
+
+            const generatedDescription = response.choices[0]?.message?.content?.trim();
+
+            if (!generatedDescription) {
+                throw new Error('No job description generated from OpenAI');
+            }
+
+            return generatedDescription;
+        } catch (error: any) {
+            console.error('Job description generation error:', error);
+            throw new Error(error.message || 'Job description generation failed');
+        }
+    }
+
     getUsageInfo(): { configured: boolean; model: string; maxTokens: number; source: string } {
         const hasEnvKey = !!(import.meta.env.VITE_OPENAI_API_KEY);
         const hasChromeKey = !!(typeof window !== 'undefined' && localStorage.getItem('chrome_openai_api_key'));
