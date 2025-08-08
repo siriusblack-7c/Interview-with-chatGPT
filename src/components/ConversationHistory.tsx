@@ -50,8 +50,8 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                         <div
                             key={item.id}
                             className={`flex gap-3 p-3 rounded-lg transition-all hover:shadow-sm ${item.type === 'question'
-                                ? 'bg-blue-50 border-l-4 border-blue-500'
-                                : 'bg-green-50 border-l-4 border-green-500'
+                                ? 'bg-[#404040] border-l-4 border-blue-500'
+                                : 'bg-[#404040] border-l-4 border-green-500'
                                 }`}
                         >
                             <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${item.type === 'question'
@@ -67,11 +67,11 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className={`text-sm font-medium ${item.type === 'question' ? 'text-blue-700' : 'text-green-700'
+                                    <span className={`text-sm font-medium ${item.type === 'question' ? 'text-blue-600' : 'text-green-600'
                                         }`}>
                                         {item.type === 'question' ? 'Interviewer' : 'AI Assistant'}
                                     </span>
-                                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                                    <div className="flex items-center gap-1 text-xs text-gray-400">
                                         <Clock className="h-3 w-3" />
                                         <span>{formatTime(item.timestamp)}</span>
                                     </div>
@@ -86,7 +86,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
             </div>
 
             {conversations.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="mt-3 pt-3 border-t border-gray-600">
                     <div className="flex items-center justify-between text-sm text-gray-400">
                         <span>{conversations.length} items in history</span>
                         <span className="flex items-center gap-1">

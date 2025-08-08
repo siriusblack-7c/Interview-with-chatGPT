@@ -94,7 +94,7 @@ export default function ResponseGenerator({
             </div>
 
             {question && (
-                <div className="mb-4 p-4 bg-[#2c2c2c] rounded-lg border-l-4 border-blue-500">
+                <div className="mb-4 p-4 bg-[#404040] rounded-lg border-l-4 border-blue-500">
                     <p className="text-sm text-blue-600 font-medium mb-1">Question Detected:</p>
                     <p className="text-gray-200">{question}</p>
                 </div>
@@ -112,13 +112,13 @@ export default function ResponseGenerator({
             )}
 
             {isGenerating ? (
-                <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-lg">
+                <div className="flex items-center gap-3 p-4 bg-[#404040] rounded-lg">
                     <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
-                    <span className="text-purple-700 font-medium">
+                    <span className="text-purple-600 font-medium">
                         OpenAI is thinking...
                     </span>
                 </div>
@@ -128,12 +128,12 @@ export default function ResponseGenerator({
                         <CheckCircle className="h-4 w-4" />
                         <span className="text-sm font-medium">Response Ready</span>
                     </div>
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                        <p className="text-gray-800 leading-relaxed">{currentResponse}</p>
+                    <div className="p-4 bg-[#404040] rounded-lg border border-green-200">
+                        <p className="text-gray-300 leading-relaxed">{currentResponse}</p>
                     </div>
                 </div>
             ) : (
-                <div className="flex items-center gap-2 text-gray-400 p-4 bg-[#202020] rounded-lg">
+                <div className="flex items-center gap-2 text-gray-400 p-4 bg-[#404040] rounded-lg">
                     <Clock className="h-4 w-4" />
                     <span className="text-sm">
                         {openaiConfigured && openaiService.isConfigured()
