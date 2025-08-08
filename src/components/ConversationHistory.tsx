@@ -46,7 +46,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                         <p className="text-sm text-center">Start by asking a question!</p>
                     </div>
                 ) : (
-                    conversations.reverse().map((item) => (
+                    conversations.map((item) => (
                         <div
                             key={item.id}
                             className={`flex gap-3 p-3 rounded-lg transition-all hover:shadow-sm ${item.type === 'question'
