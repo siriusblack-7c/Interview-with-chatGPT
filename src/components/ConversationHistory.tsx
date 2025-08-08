@@ -38,7 +38,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto flex-col-reverse space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="flex-1 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {conversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
                         <MessageCircle className="h-12 w-12 text-gray-300 mb-3" />
@@ -46,7 +46,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                         <p className="text-sm text-center">Start by asking a question!</p>
                     </div>
                 ) : (
-                    conversations.reverse().map((item) => (
+                    conversations.map((item) => (
                         <div
                             key={item.id}
                             className={`flex gap-3 p-3 rounded-lg transition-all hover:shadow-sm ${item.type === 'question'
