@@ -115,6 +115,18 @@ export default function InterviewDashboard() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Column */}
+                    
+                    <div className="space-y-6">
+                        {/* Conversation History */}
+                        <ConversationHistory
+                            conversations={conversations}
+                            onClearHistory={handleClearHistory}
+                        />
+                        {/* OpenAI Configuration */}
+                        <OpenAIConfig onConfigChange={setOpenaiConfigured} />
+                    </div>
+                    {/* Right Column */}
+
                     <div className="space-y-6">
                         {/* Speech Recognition */}
                         <SpeechRecognition
@@ -154,17 +166,6 @@ export default function InterviewDashboard() {
                             jobDescription={jobDescription}
                             additionalContext={additionalContext}
                         />
-                    </div>
-
-                    {/* Right Column */}
-                    <div className="space-y-6">
-                        {/* Conversation History */}
-                        <ConversationHistory
-                            conversations={conversations}
-                            onClearHistory={handleClearHistory}
-                        />
-                        {/* OpenAI Configuration */}
-                        <OpenAIConfig onConfigChange={setOpenaiConfigured} />
                     </div>
 
                 </div>
