@@ -96,8 +96,8 @@ export default function InterviewDashboard() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
-                                <Sparkles className="h-6 w-6 text-white" />
+                            <div className="w-40 h-10">
+                                <img src="/logo.svg" alt="AI Interview Copilot" className="h-10 w-40" />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-white">AI Interview Copilot</h1>
@@ -123,10 +123,6 @@ export default function InterviewDashboard() {
                                     </span>
                                 </div>
                             </div>
-
-                            {/* <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                                <Settings className="h-5 w-5" />
-                            </button> */}
                         </div>
                     </div>
                 </div>
@@ -136,16 +132,6 @@ export default function InterviewDashboard() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Column */}
-                    <div className="space-y-6">
-                        {/* Conversation History */}
-                        <ConversationHistory
-                            conversations={conversations}
-                            onClearHistory={handleClearHistory}
-                        />
-                        {/* OpenAI Configuration */}
-                        <OpenAIConfig onConfigChange={setOpenaiConfigured} />
-                    </div>
-                    {/* Right Column */}
                     <div className="space-y-6">
                         {/* Speech Recognition */}
                         <SpeechRecognition
@@ -158,6 +144,30 @@ export default function InterviewDashboard() {
                             isMicActive={isMicActive}
                             isSharing={isSharing}
                         />
+                        {/* Conversation History */}
+                        <ConversationHistory
+                            conversations={conversations}
+                            onClearHistory={handleClearHistory}
+                        />
+                        {/* Hidden Text-to-Speech for automatic playback */}
+                        <TextToSpeech
+                            ref={textToSpeechRef}
+                            text={currentResponse}
+                            autoPlay={true}
+                            onStateChange={handleSpeechStateChange}
+                        />
+                        {/* Document Manager */}
+                        <DocumentManager
+                            onResumeUpdate={handleResumeUpdate}
+                            onJobDescriptionUpdate={handleJobDescriptionUpdate}
+                            onAdditionalContextUpdate={handleAdditionalContextUpdate}
+                            resumeText={resumeText}
+                            jobDescription={jobDescription}
+                            additionalContext={additionalContext}
+                        />
+                    </div>
+                    {/* Right Column */}
+                    <div className="space-y-6">
                         {/* Response Generator */}
                         <ResponseGenerator
                             question={currentQuestion}
@@ -169,24 +179,8 @@ export default function InterviewDashboard() {
                             onMuteToggle={handleMuteToggle}
                             isMuted={isMuted}
                         />
-
-                        {/* Hidden Text-to-Speech for automatic playback */}
-                        <TextToSpeech
-                            ref={textToSpeechRef}
-                            text={currentResponse}
-                            autoPlay={true}
-                            onStateChange={handleSpeechStateChange}
-                        />
-
-                        {/* Document Manager */}
-                        <DocumentManager
-                            onResumeUpdate={handleResumeUpdate}
-                            onJobDescriptionUpdate={handleJobDescriptionUpdate}
-                            onAdditionalContextUpdate={handleAdditionalContextUpdate}
-                            resumeText={resumeText}
-                            jobDescription={jobDescription}
-                            additionalContext={additionalContext}
-                        />
+                        {/* OpenAI Configuration */}
+                        <OpenAIConfig onConfigChange={setOpenaiConfigured} />
                     </div>
                 </div>
             </div>
