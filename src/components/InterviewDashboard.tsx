@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { BarChart3, Zap, Sparkles } from 'lucide-react';
+import { BarChart3, Zap } from 'lucide-react';
 import SpeechRecognition from './SpeechRecognition';
 import ResponseGenerator from './ResponseGenerator';
 import ConversationHistory from './ConversationHistory';
