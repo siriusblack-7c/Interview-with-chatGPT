@@ -86,7 +86,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 <div
                     onDrop={handleFileDrop}
                     onDragOver={(e) => e.preventDefault()}
-                    className={`border-2 border-dashed border-gray-300 ${colors.hover} transition-colors rounded-lg p-6 text-center cursor-pointer`}
+                    className={`border border-dashed border-gray-500 ${colors.hover} transition-colors rounded-lg p-6 text-center cursor-pointer`}
                 >
                     <input
                         type="file"
