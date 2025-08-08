@@ -29,7 +29,7 @@ export const useConversation = () => {
             timestamp: new Date()
         };
 
-        setConversations(prev => [ questionItem, ...prev]);
+        setConversations(prev => [...prev, questionItem]);
         setSessionStats(prev => ({
             ...prev,
             questionsAnswered: prev.questionsAnswered + 1
@@ -44,7 +44,7 @@ export const useConversation = () => {
             timestamp: new Date()
         };
 
-        setConversations(prev => [responseItem, ...prev]);
+        setConversations(prev => [...prev, responseItem]);
     }, []);
 
     const clearHistory = useCallback(() => {
