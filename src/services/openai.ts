@@ -207,11 +207,106 @@ Context: This is a live interview where the candidate is being asked questions i
         }
     }
 
+    async transcribeAudio(blob: Blob): Promise<string> {
+        if (!this.isConfigured()) {
+            throw new Error('OpenAI API key not configured for transcription');
+        }
+
+        try {
+            // Prefer the SDK when available in browser
+            if ((this.client as any)?.audio?.transcriptions?.create) {
+                const file = new File([blob], 'audio.webm', { type: blob.type || 'audio/webm' });
+                const result: any = await (this.client as any).audio.transcriptions.create({
+                    file,
+                    model: (import.meta.env.VITE_OPENAI_TRANSCRIBE_MODEL || 'gpt-4o-transcribe')
+                });
+                const text = result?.text || result?.data?.text || '';
+                return text;
+            }
+
+            // Fallback to REST
+            const form = new FormData();
+            const file = new File([blob], 'audio.webm', { type: blob.type || 'audio/webm' });
+            form.append('file', file);
+            form.append('model', import.meta.env.VITE_OPENAI_TRANSCRIBE_MODEL || 'whisper-1');
+
+            const resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${this.config.apiKey}`
+                },
+                body: form
+            });
+            if (!resp.ok) {
+                const err = await resp.text();
+                throw new Error(`Transcription failed: ${resp.status} ${err}`);
+            }
+            const json = await resp.json();
+
+            console.log("whisper result--------------", json)
+            return json.text || '';
+        } catch (error: any) {
+            console.error('Transcription error:', error);
+            throw new Error(error.message || 'Transcription error');
+        }
+    }
+
+    async detectQuestionAndAnswer(
+        utterance: string,
+        context?: { resume?: string; jobDescription?: string; additionalContext?: string }
+    ): Promise<{ isQuestion: boolean; question: string | null; answer: string | null }> {
+        if (!this.isConfigured()) {
+            throw new Error('OpenAI API key not configured.');
+        }
+
+        const system = `You analyze a short user utterance and decide if it is a question addressed to an interview assistant. If it is a question, answer it concisely (2-4 sentences) using any provided context. Respond ONLY as minified JSON with keys: isQuestion (boolean), question (string|null), answer (string|null). Do not include any extra text.`;
+
+        const instruction = {
+            role: 'user' as const,
+            content: JSON.stringify({
+                utterance,
+                context: context || null,
+                schema: {
+                    isQuestion: 'boolean',
+                    question: 'string|null',
+                    answer: 'string|null'
+                }
+            })
+        };
+
+        try {
+            const resp = await this.client!.chat.completions.create({
+                model: this.config.model,
+                messages: [
+                    { role: 'system', content: system },
+                    instruction
+                ],
+                temperature: 0.4,
+                response_format: { type: 'json_object' } as any,
+                max_tokens: 800
+            });
+            const raw = resp.choices[0]?.message?.content?.trim() || '{}';
+            let parsed: any = {};
+            try {
+                parsed = JSON.parse(raw);
+            } catch {
+                parsed = {};
+            }
+            return {
+                isQuestion: !!parsed.isQuestion,
+                question: typeof parsed.question === 'string' ? parsed.question : null,
+                answer: typeof parsed.answer === 'string' ? parsed.answer : null
+            };
+        } catch (error: any) {
+            console.error('detectQuestionAndAnswer error:', error);
+            throw new Error(error.message || 'detectQuestionAndAnswer failed');
+        }
+    }
+
     async generateFollowUpQuestions(originalQuestion: string, response: string): Promise<string[]> {
         if (!this.isConfigured()) {
             return [];
         }
-
         try {
             const prompt = `Based on this interview question and response, suggest 2-3 relevant follow-up questions an interviewer might ask:
 

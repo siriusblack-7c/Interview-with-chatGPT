@@ -8,6 +8,7 @@ import OpenAIConfig from './OpenAIConfig';
 import DocumentManager from './DocumentManager';
 import { useConversation } from '../hooks/useConversation';
 import { useMicrophone } from '../hooks/useMicrophone';
+import { useSystemAudio } from '../hooks/useSystemAudio';
 import type { TextToSpeechRef } from '../types/speech';
 
 export default function InterviewDashboard() {
@@ -31,6 +32,22 @@ export default function InterviewDashboard() {
             addQuestion(question);
         }
     });
+
+    // System audio capture (tab/system) for 2-way audio
+    const { isSharing, startShare, stopShare, setListening: setSystemListening } = useSystemAudio({
+        onQuestionDetected: (question: string) => {
+            console.log('🖥️ Question detected from system audio:', question);
+            setCurrentQuestion(question);
+            addQuestion(question);
+        }
+    });
+
+    // Keep system-audio listener in sync with voice input toggle
+    // When user enables voice input, we also let system-audio chunks be processed
+    // When disabled, system audio can keep streaming but will not trigger detection
+    if (setSystemListening) {
+        setSystemListening(isListening);
+    }
 
     const handleResponseGenerated = useCallback((response: string) => {
         setCurrentResponse(response);
@@ -120,14 +137,26 @@ export default function InterviewDashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Column */}
                     <div className="space-y-6">
+                        {/* Conversation History */}
+                        <ConversationHistory
+                            conversations={conversations}
+                            onClearHistory={handleClearHistory}
+                        />
+                        {/* OpenAI Configuration */}
+                        <OpenAIConfig onConfigChange={setOpenaiConfigured} />
+                    </div>
+                    {/* Right Column */}
+                    <div className="space-y-6">
                         {/* Speech Recognition */}
                         <SpeechRecognition
                             isListening={isListening}
                             onToggleListening={toggleListening}
+                            onToggleShare={() => (isSharing ? stopShare() : startShare())}
                             onStopResponse={handleStopResponse}
                             isResponsePlaying={isResponsePlaying}
                             transcript={transcript}
                             isMicActive={isMicActive}
+                            isSharing={isSharing}
                         />
                         {/* Response Generator */}
                         <ResponseGenerator
@@ -159,18 +188,6 @@ export default function InterviewDashboard() {
                             additionalContext={additionalContext}
                         />
                     </div>
-
-                    {/* Right Column */}
-                    <div className="space-y-6">
-                        {/* Conversation History */}
-                        <ConversationHistory
-                            conversations={conversations}
-                            onClearHistory={handleClearHistory}
-                        />
-                        {/* OpenAI Configuration */}
-                        <OpenAIConfig onConfigChange={setOpenaiConfigured} />
-                    </div>
-
                 </div>
             </div>
 

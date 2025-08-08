@@ -5,7 +5,7 @@ export const QUESTION_PATTERNS = {
     // Modal verbs that often indicate questions
     modalVerbs: ['can', 'could', 'would', 'should', 'might', 'may', 'must', 'will'],
     // Phrases that indicate questions
-    questionPhrases: ['do you', 'can you', 'could you', 'would you', 'should you', 'tell me', 'please tell', 'have you', 'have you ever'],
+    questionPhrases: ['do you', 'can you', 'could you', 'would you', 'should you', 'tell me', 'please tell'],
     // Question mark
     endsWithQuestion: (text: string) => text.trim().endsWith('?')
 };
