@@ -70,17 +70,17 @@ export default function ResponseGenerator({
     }, [question, resumeText, jobDescription, additionalContext]);
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <Brain className="h-5 w-5 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-800">AI Response Generator</h3>
+                    <h3 className="text-lg font-semibold text-gray-200">AI Response Generator</h3>
                 </div>
-                <div className="flex items-center gap-2 text-xs bg-gray-100 rounded-full p-1">
+                <div className="flex items-center text-xs rounded-full">
                     {onMuteToggle && (
                         <button
                             onClick={() => onMuteToggle(!isMuted)}
-                            className={`p-1 rounded transition-colors flex items-center justify-center h-12 w-12 border border-gray-200 rounded-full bg-white ${isMuted ? 'text-red-500 hover:text-red-600' : 'text-green-500 hover:text-green-600'}`}
+                            className={`p-1 rounded transition-colors flex items-center justify-center h-12 w-12 rounded-full text-white hover:scale-105 ${isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
                             title={isMuted ? 'Unmute Speech' : 'Mute Speech'}
                         >
                             {isMuted ? (
@@ -94,9 +94,9 @@ export default function ResponseGenerator({
             </div>
 
             {question && (
-                <div className="mb-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                <div className="mb-4 p-4 bg-[#2c2c2c] rounded-lg border-l-4 border-blue-500">
                     <p className="text-sm text-blue-600 font-medium mb-1">Question Detected:</p>
-                    <p className="text-gray-800">{question}</p>
+                    <p className="text-gray-200">{question}</p>
                 </div>
             )}
 
@@ -133,7 +133,7 @@ export default function ResponseGenerator({
                     </div>
                 </div>
             ) : (
-                <div className="flex items-center gap-2 text-gray-500 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 text-gray-400 p-4 bg-[#202020] rounded-lg">
                     <Clock className="h-4 w-4" />
                     <span className="text-sm">
                         {openaiConfigured && openaiService.isConfigured()

@@ -51,9 +51,9 @@ export default function OpenAIConfig({ onConfigChange }: OpenAIConfigProps) {
     const usageInfo = openaiService.getUsageInfo();
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
                     <Settings className="h-5 w-5 text-blue-600" />
                     OpenAI Configuration
                 </h3>
@@ -67,8 +67,8 @@ export default function OpenAIConfig({ onConfigChange }: OpenAIConfigProps) {
 
             {/* Status Indicator */}
             <div className={`flex items-center gap-2 p-3 rounded-lg mb-4 ${isConfigured
-                ? 'bg-green-50 text-green-700 border border-green-200'
-                : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                ? 'bg-green-400 text-gray-700 border border-green-200'
+                : 'bg-red-400 text-gray-200 border border-red-200'
                 }`}>
                 {isConfigured ? (
                     <>
@@ -86,12 +86,12 @@ export default function OpenAIConfig({ onConfigChange }: OpenAIConfigProps) {
 
             {showConfig && (
                 <div className="space-y-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="bg-[#2c2c2c] border border-blue-200 rounded-lg p-4">
                         <div className="flex items-start gap-2">
                             <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                            <div className="text-sm text-blue-700">
+                            <div className="text-sm text-blue-200">
                                 <p className="font-medium mb-2">🔑 Recommended Setup (Environment Variable):</p>
-                                <div className="bg-blue-100 border border-blue-300 rounded p-2 mb-2">
+                                <div className="bg-[#202020] border border-blue-300 rounded p-2 mb-2">
                                     <p className="text-xs font-mono">
                                         1. Create <strong>.env.local</strong> file in project root<br />
                                         2. Add: <strong>VITE_OPENAI_API_KEY=sk-your_key_here</strong><br />
@@ -109,7 +109,7 @@ export default function OpenAIConfig({ onConfigChange }: OpenAIConfigProps) {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-200 mb-2">
                             OpenAI API Key
                         </label>
                         <div className="flex gap-2">
@@ -120,7 +120,7 @@ export default function OpenAIConfig({ onConfigChange }: OpenAIConfigProps) {
                                     value={apiKey}
                                     onChange={(e) => setApiKey(e.target.value)}
                                     placeholder="sk-..."
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                    className="w-full pl-10 pr-4 py-2 bg-[#202020] text-gray-200 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                 />
                             </div>
                             <button

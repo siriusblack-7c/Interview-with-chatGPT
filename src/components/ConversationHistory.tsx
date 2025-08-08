@@ -22,9 +22,9 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 h-[80vh] flex flex-col">
+        <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6 h-[80vh] flex flex-col">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-green-600" />
                     Conversation History
                 </h3>
@@ -40,7 +40,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
 
             <div className="flex-1 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {conversations.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
                         <MessageCircle className="h-12 w-12 text-gray-300 mb-3" />
                         <p className="text-center">No conversation yet</p>
                         <p className="text-sm text-center">Start by asking a question!</p>
@@ -76,7 +76,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                                         <span>{formatTime(item.timestamp)}</span>
                                     </div>
                                 </div>
-                                <p className="text-sm text-gray-700 leading-relaxed break-words">
+                                <p className="text-sm text-gray-200 leading-relaxed break-words">
                                     {item.content}
                                 </p>
                             </div>
@@ -87,7 +87,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
 
             {conversations.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-200">
-                    <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center justify-between text-sm text-gray-400">
                         <span>{conversations.length} items in history</span>
                         <span className="flex items-center gap-1">
                             <div className="w-2 h-2 rounded-full bg-green-500"></div>

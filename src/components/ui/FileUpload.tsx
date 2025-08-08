@@ -17,15 +17,15 @@ interface FileUploadProps {
 const colorSchemes = {
     blue: {
         border: 'border-blue-400',
-        bg: 'bg-blue-50',
-        text: 'text-blue-600',
+        bg: 'bg-gray-800',
+        text: 'text-gray-200',
         hover: 'hover:border-blue-400',
         icon: 'text-blue-600'
     },
     purple: {
         border: 'border-purple-400',
-        bg: 'bg-purple-50',
-        text: 'text-purple-600',
+        bg: 'bg-gray-800',
+        text: 'text-gray-200',
         hover: 'hover:border-purple-400',
         icon: 'text-purple-600'
     },

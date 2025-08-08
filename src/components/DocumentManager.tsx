@@ -83,10 +83,10 @@ export default function DocumentManager({
     }, [onAdditionalContextUpdate]);
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6">
             <div className="flex items-center gap-2 mb-6">
                 <FolderCheck className="h-5 w-5 text-indigo-600" />
-                <h3 className="text-lg font-semibold text-gray-800">Interview Context</h3>
+                <h3 className="text-lg font-semibold text-gray-200">Interview Context</h3>
                 <div className="ml-auto flex items-center gap-2 text-xs">
                     {resumeText && (
                         <div className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full">
@@ -107,7 +107,7 @@ export default function DocumentManager({
                 {/* Resume Upload Section */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <h4 className="text-sm font-medium text-gray-200 flex items-center gap-2">
                             <FileText className="h-4 w-4 text-blue-600" />
                             Resume
                         </h4>
@@ -128,7 +128,7 @@ export default function DocumentManager({
                 {/* Job Description Section */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <h4 className="text-sm font-medium text-gray-200 flex items-center gap-2">
                             <Briefcase className="h-4 w-4 text-purple-600" />
                             Job Description
                         </h4>
@@ -182,7 +182,7 @@ export default function DocumentManager({
                 {/* Additional Context Section */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                            <h4 className="text-sm font-medium text-gray-200 flex items-center gap-2">
                             <NotebookPen className="h-4 w-4 text-orange-600" />
                             Additional Context
                         </h4>
@@ -221,9 +221,9 @@ export default function DocumentManager({
 
                 {/* Context Summary */}
                 {(resumeText || jobDescription || additionalContext) && (
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
-                        <h5 className="text-sm font-medium text-gray-800 mb-2">🎯 Interview Context Active</h5>
-                        <div className="text-xs text-gray-600 space-y-1">
+                    <div className="bg-[#2c2c2c] border border-blue-200 rounded-lg p-4">
+                        <h5 className="text-sm font-medium text-gray-200 mb-2">🎯 Interview Context Active</h5>
+                        <div className="text-xs text-gray-400 space-y-1">
                             {resumeText && <p>✓ Resume loaded - responses will reference your background</p>}
                             {jobDescription && <p>✓ Job description set - responses will be tailored to the role</p>}
                             {additionalContext && <p>✓ Additional context provided - responses will be more personalized</p>}

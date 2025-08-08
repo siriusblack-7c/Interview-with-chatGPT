@@ -33,7 +33,7 @@ export default function SpeechRecognition({
 
     if (!isSupported) {
         return (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <div className="bg-[#2c2c2c] border border-red-200 rounded-xl p-6 text-center">
                 <Mic className="h-12 w-12 text-red-400 mx-auto mb-3" />
                 <p className="text-red-700 font-medium">Speech Recognition Not Supported</p>
                 <p className="text-red-600 text-sm mt-1">
@@ -45,9 +45,9 @@ export default function SpeechRecognition({
 
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
                     <Mic className="h-5 w-5 text-blue-600" />
                     Voice Input
                 </h3>
@@ -83,7 +83,7 @@ export default function SpeechRecognition({
 
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                    <div className={`flex items-center gap-2 text-sm ${isListening ? 'text-green-600' : 'text-gray-500'}`}>
+                    <div className={`flex items-center gap-2 text-sm ${isListening ? 'text-green-600' : 'text-gray-400'}`}>
                         <div className={`w-2 h-2 rounded-full ${isMicActive ? 'bg-green-500' : 'bg-red-500'} ${isListening ? 'animate-pulse' : ''}`} />
                         {isMicActive
                             ? (isListening ? 'Listening for questions...' : 'Microphone ready - click to listen')
@@ -101,9 +101,9 @@ export default function SpeechRecognition({
                 </div>
 
                 {displayTranscript && (
-                    <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-red-500">
-                        <p className="text-sm text-gray-600 mb-1">Last heard:</p>
-                        <p className="text-gray-800">{displayTranscript}</p>
+                    <div className="bg-[#2c2c2c] rounded-lg p-3 border-l-4 border-red-500">
+                        <p className="text-sm text-gray-400 mb-1">Last heard:</p>
+                        <p className="text-gray-200">{displayTranscript}</p>
                     </div>
                 )}
             </div>

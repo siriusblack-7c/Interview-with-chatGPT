@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Briefcase, BarChart3, Zap } from 'lucide-react';
+import { BarChart3, Zap, Sparkles } from 'lucide-react';
 import SpeechRecognition from './SpeechRecognition';
 import ResponseGenerator from './ResponseGenerator';
 import ConversationHistory from './ConversationHistory';
@@ -73,18 +73,18 @@ export default function InterviewDashboard() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="min-h-screen bg-[#1a1a1a] from-blue-50 via-white to-purple-50">
             {/* Header */}
-            <div className="bg-white shadow-sm border-b border-gray-200">
+            <div className="bg-[#1a1a1a] shadow-sm border-b border-gray-600">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
-                                <Briefcase className="h-6 w-6 text-white" />
+                                <Sparkles className="h-6 w-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">AI Interview Copilot</h1>
-                                <p className="text-sm text-gray-600">Real-time interview question analysis & response generation</p>
+                                <h1 className="text-2xl font-bold text-white">AI Interview Copilot</h1>
+                                <p className="text-sm text-gray-300">Real-time interview question analysis & response generation</p>
                             </div>
                         </div>
 
@@ -92,9 +92,9 @@ export default function InterviewDashboard() {
                             {/* Session Stats */}
                             <div className="hidden md:flex items-center gap-6 text-sm">
                                 <div className="flex items-center gap-2">
-                                    <BarChart3 className="h-4 w-4 text-blue-600" />
-                                    <span className="text-gray-600">Questions:</span>
-                                    <span className="font-semibold text-gray-900">{sessionStats.questionsAnswered}</span>
+                                    <BarChart3 className="h-4 w-4 text-blue-400" />
+                                    <span className="text-gray-400">Questions:</span>
+                                    <span className="font-semibold text-gray-200">{sessionStats.questionsAnswered}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Zap className="h-4 w-4 text-green-600" />
@@ -175,9 +175,9 @@ export default function InterviewDashboard() {
             </div>
 
             {/* Footer */}
-            <div className="bg-gray-50 border-t border-gray-200 mt-12">
+            <div className="bg-[#1a1a1a] border-t border-gray-600 mt-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-sm text-gray-400">
                         <p>AI Interview Copilot</p>
                         <p>Built with React + TypeScript + Tailwind CSS</p>
                     </div>
