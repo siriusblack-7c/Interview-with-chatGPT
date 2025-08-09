@@ -126,6 +126,17 @@ export default function ResponseGenerator({
         setTypedQuestion('');
     };
 
+    const clearTypedQuestion = () => {
+        setTypedQuestion('');
+        setTimeout(() => {
+            detectedInputRef.current?.focus();
+            handleFocusInput();
+            autoResizeDetectedInput();
+            stopListening?.();
+            setSystemListening?.(false);
+        }, 0);
+    };
+
     return (
         <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -151,7 +162,14 @@ export default function ResponseGenerator({
             </div>
 
             <div className="mb-4 p-4 bg-[#404040] rounded-lg border-l-4 border-blue-500">
-                <p className="text-sm text-blue-600 font-medium mb-2">Question Detected (edit or press Enter to send):</p>
+                <div className="flex items-center justify-between">
+                    <p className="text-sm text-blue-600 font-medium mb-2">Question Detected (edit or press Enter to send):</p>
+                    <div className="flex items-center gap-2">
+                        <button className="text-sm text-blue-600 font-medium mb-2" onClick={clearTypedQuestion}>
+                            Clear
+                        </button>
+                    </div>
+                </div>
                 <div className="flex items-end gap-2">
                     <textarea
                         value={typedQuestion}
