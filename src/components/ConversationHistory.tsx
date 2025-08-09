@@ -1,4 +1,5 @@
 import { MessageCircle, User, Bot, Clock } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 interface ConversationItem {
     id: string;
@@ -13,6 +14,8 @@ interface ConversationHistoryProps {
 }
 
 export default function ConversationHistory({ conversations, onClearHistory }: ConversationHistoryProps) {
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
     const formatTime = (date: Date) => {
         return date.toLocaleTimeString('en-US', {
             hour: '2-digit',
@@ -21,8 +24,15 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
         });
     };
 
+    // Auto-scroll to bottom when new messages are added
+    useEffect(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        }
+    }, [conversations]);
+
     return (
-        <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6 h-[calc(100vh-300px)] flex flex-col">
+        <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6 h-[calc(100vh-350px)] flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-green-600" />
@@ -33,12 +43,15 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                         onClick={onClearHistory}
                         className="text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
                     >
-                        Clear History
+                        Clear History ({conversations.length})
                     </button>
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+            >
                 {conversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
                         <MessageCircle className="h-12 w-12 text-gray-300 mb-3" />
@@ -84,18 +97,6 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                     ))
                 )}
             </div>
-
-            {conversations.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-600">
-                    <div className="flex items-center justify-between text-sm text-gray-400">
-                        <span>{conversations.length} items in history</span>
-                        <span className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                            Live session
-                        </span>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

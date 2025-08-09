@@ -90,26 +90,18 @@ export default function OpenAIConfig({ onConfigChange }: OpenAIConfigProps) {
                         <div className="flex items-start gap-2">
                             <Info className="h-4 w-4 text-blue-600 mt-0.5" />
                             <div className="text-sm text-blue-200">
-                                <p className="font-medium mb-2">🔑 Recommended Setup (Environment Variable):</p>
-                                <div className="bg-[#202020] border border-blue-300 rounded p-2 mb-2">
-                                    <p className="text-xs font-mono">
-                                        1. Create <strong>.env.local</strong> file in project root<br />
-                                        2. Add: <strong>VITE_OPENAI_API_KEY=sk-your_key_here</strong><br />
-                                        3. Restart dev server: <strong>npm run dev</strong>
-                                    </p>
-                                </div>
-                                <p className="font-medium mb-1">Alternative (Browser Storage):</p>
+                                <p className="font-medium mb-1">If this plugin is not working, please try the following:</p>
                                 <ol className="list-decimal list-inside space-y-1 text-xs">
                                     <li>Get API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline">OpenAI Platform</a></li>
-                                    <li>Enter your API key below</li>
-                                    <li>Click "Save Configuration"</li>
+                                    <li>Enter your API key below and click "Save Configuration"</li>
+                                    <li>Restart the plugin</li>
                                 </ol>
                             </div>
                         </div>
                     </div>
 
                     <div>
-                            <label className="block text-sm font-medium text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-200 mb-2">
                             OpenAI API Key
                         </label>
                         <div className="flex gap-2">

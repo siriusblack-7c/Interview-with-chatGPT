@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Brain, Clock, CheckCircle, AlertTriangle, Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Brain, CheckCircle, AlertTriangle, Volume2, VolumeX, Send } from 'lucide-react';
 import openaiService from '../services/openai';
 
 interface ResponseGeneratorProps {
@@ -11,6 +11,12 @@ interface ResponseGeneratorProps {
     additionalContext?: string;
     onMuteToggle?: (muted: boolean) => void;
     isMuted?: boolean;
+    // New props for manual typing + mic control
+    onManualQuestionSubmit?: (question: string) => void;
+    isListening?: boolean;
+    stopListening?: () => void;
+    startListening?: () => void;
+    setSystemListening?: (listening: boolean) => void;
 }
 
 export default function ResponseGenerator({
@@ -21,11 +27,30 @@ export default function ResponseGenerator({
     jobDescription = '',
     additionalContext = '',
     onMuteToggle,
-    isMuted = false
+    isMuted = false,
+    onManualQuestionSubmit,
+    isListening = false,
+    stopListening,
+    startListening,
+    setSystemListening
 }: ResponseGeneratorProps) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentResponse, setCurrentResponse] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [typedQuestion, setTypedQuestion] = useState('');
+    const pausedByTypingRef = useRef(false);
+    const detectedInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+    const autoResizeDetectedInput = () => {
+        const el = detectedInputRef.current;
+        if (!el) return;
+        // Reset height to compute the correct scrollHeight
+        el.style.height = 'auto';
+        const maxHeightPx = 300; // grow up to this height, then scroll
+        const nextHeight = Math.min(el.scrollHeight, maxHeightPx);
+        el.style.height = `${nextHeight}px`;
+        el.style.overflowY = el.scrollHeight > maxHeightPx ? 'auto' : 'hidden';
+    };
     // Removed responseSource to simplify logic
 
     const generateResponse = async (question: string): Promise<string> => {
@@ -64,10 +89,53 @@ export default function ResponseGenerator({
     useEffect(() => {
         console.log('🧠 ResponseGenerator received question:', question);
         if (question) {
-            console.log('🚀 Starting response generation for:', question);
+            // Populate textarea for visibility but do not focus; auto-generate immediately
+            setTypedQuestion(question);
+            autoResizeDetectedInput();
             generateResponse(question);
         }
-    }, [question, resumeText, jobDescription, additionalContext]);
+    }, [question]);
+
+    useEffect(() => {
+        autoResizeDetectedInput();
+    }, [typedQuestion]);
+
+    const handleFocusInput = () => {
+        if (isListening) {
+            pausedByTypingRef.current = true;
+            stopListening?.();
+            setSystemListening?.(false);
+        }
+    };
+
+    const handleBlurInput = () => {
+        if (pausedByTypingRef.current) {
+            pausedByTypingRef.current = false;
+            startListening?.();
+            setSystemListening?.(true);
+        }
+    };
+
+    const submitTypedQuestion = async () => {
+        const trimmed = typedQuestion.trim();
+        if (!trimmed) return;
+        // Optionally notify parent; generation is handled locally
+        if (onManualQuestionSubmit) {
+            onManualQuestionSubmit(trimmed);
+        }
+        setTypedQuestion('');
+    };
+
+    const clearTypedQuestion = () => {
+        setTypedQuestion('');
+        setTimeout(() => {
+            detectedInputRef.current?.focus();
+            handleFocusInput();
+            autoResizeDetectedInput();
+            stopListening?.();
+            setSystemListening?.(false);
+        }, 0);
+    };
 
     return (
         <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6">
@@ -93,12 +161,43 @@ export default function ResponseGenerator({
                 </div>
             </div>
 
-            {question && (
-                <div className="mb-4 p-4 bg-[#404040] rounded-lg border-l-4 border-blue-500">
-                    <p className="text-sm text-blue-600 font-medium mb-1">Question Detected:</p>
-                    <p className="text-gray-200">{question}</p>
+            <div className="mb-4 p-4 bg-[#404040] rounded-lg border-l-4 border-blue-500">
+                <div className="flex items-center justify-between">
+                    <p className="text-sm text-blue-600 font-medium mb-2">Question Detected (edit or press Enter to send):</p>
+                    <div className="flex items-center gap-2">
+                        <button className="text-sm text-blue-600 font-medium mb-2" onClick={clearTypedQuestion}>
+                            Clear
+                        </button>
+                    </div>
                 </div>
-            )}
+                <div className="flex items-end gap-2">
+                    <textarea
+                        value={typedQuestion}
+                        onChange={(e) => setTypedQuestion(e.target.value)}
+                        onFocus={handleFocusInput}
+                        onBlur={handleBlurInput}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                submitTypedQuestion();
+                            }
+                        }}
+                        rows={1}
+                        ref={detectedInputRef}
+                        className="flex-1 w-full text-sm resize-none px-3 py-2 bg-[#2a2a2a] border border-gray-600 rounded-md text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <button
+                        onClick={submitTypedQuestion}
+                        disabled={!typedQuestion.trim()}
+                        className="h-9 px-4 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-md text-sm"
+                        title="Send"
+                    >
+                        <Send className="h-4 w-4" />
+                        Send
+                    </button>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">Press Enter to send. Use Shift+Enter for a new line. Mic is paused while typing.</p>
+            </div>
 
             {error && (
                 <div className="mb-4 p-3 bg-red-50 rounded-lg border border-red-200">
@@ -133,15 +232,7 @@ export default function ResponseGenerator({
                     </div>
                 </div>
             ) : (
-                <div className="flex items-center gap-2 text-gray-400 p-4 bg-[#404040] rounded-lg">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm">
-                        {openaiConfigured && openaiService.isConfigured()
-                            ? 'Waiting for interview question...'
-                            : 'Please configure OpenAI API key to generate responses'
-                        }
-                    </span>
-                </div>
+                <></>
             )}
 
         </div>

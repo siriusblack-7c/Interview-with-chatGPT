@@ -178,6 +178,20 @@ export default function InterviewDashboard() {
                             additionalContext={additionalContext}
                             onMuteToggle={handleMuteToggle}
                             isMuted={isMuted}
+                            // Manual typing integration
+                            onManualQuestionSubmit={(q) => {
+                                setCurrentQuestion(q);
+                                addQuestion(q);
+                            }}
+                            isListening={isListening}
+                            stopListening={() => {
+                                // stop mic and system audio listening
+                                if (isListening) toggleListening();
+                            }}
+                            startListening={() => {
+                                if (!isListening) toggleListening();
+                            }}
+                            setSystemListening={setSystemListening}
                         />
                         {/* OpenAI Configuration */}
                         <OpenAIConfig onConfigChange={setOpenaiConfigured} />

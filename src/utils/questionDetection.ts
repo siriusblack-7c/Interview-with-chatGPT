@@ -1,7 +1,7 @@
 // Question detection patterns
 export const QUESTION_PATTERNS = {
     // Question words that typically start questions
-    questionWords: ['what', 'how', 'why', 'when', 'where', 'who', 'which', 'whose'],
+    questionWords: ['what', 'how', 'why', 'when', 'where', 'who', 'which', 'whose', "what's", "how's", "why's", "when's", "where's", "who's", "which's", "whose's"],
     // Modal verbs that often indicate questions
     modalVerbs: ['can', 'could', 'would', 'should', 'might', 'may', 'must', 'will'],
     // Phrases that indicate questions
