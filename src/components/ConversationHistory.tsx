@@ -43,7 +43,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                         onClick={onClearHistory}
                         className="text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
                     >
-                        Clear History
+                        Clear History ({conversations.length})
                     </button>
                 )}
             </div>
@@ -97,18 +97,6 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                     ))
                 )}
             </div>
-
-            {conversations.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-600">
-                    <div className="flex items-center justify-between text-sm text-gray-400">
-                        <span>{conversations.length} items in history</span>
-                        <span className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                            Live session
-                        </span>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
