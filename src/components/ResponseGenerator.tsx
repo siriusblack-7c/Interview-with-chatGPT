@@ -89,13 +89,10 @@ export default function ResponseGenerator({
     useEffect(() => {
         console.log('🧠 ResponseGenerator received question:', question);
         if (question) {
-            // Pre-fill and focus the textarea so user can review/edit, pausing mic
+            // Populate textarea for visibility but do not focus; auto-generate immediately
             setTypedQuestion(question);
-            setTimeout(() => {
-                detectedInputRef.current?.focus();
-                handleFocusInput();
-                autoResizeDetectedInput();
-            }, 0);
+            autoResizeDetectedInput();
+            generateResponse(question);
         }
     }, [question]);
 
@@ -170,7 +167,7 @@ export default function ResponseGenerator({
                         }}
                         rows={1}
                         ref={detectedInputRef}
-                        className="flex-1 w-full text-sm resize-none px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                        className="flex-1 w-full text-sm resize-none px-3 py-2 bg-[#2a2a2a] border border-gray-600 rounded-md text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
                     />
                     <button
                         onClick={submitTypedQuestion}
