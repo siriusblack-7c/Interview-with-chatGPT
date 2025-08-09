@@ -123,7 +123,6 @@ export default function ResponseGenerator({
         if (onManualQuestionSubmit) {
             onManualQuestionSubmit(trimmed);
         }
-        await generateResponse(trimmed);
         setTypedQuestion('');
     };
 
