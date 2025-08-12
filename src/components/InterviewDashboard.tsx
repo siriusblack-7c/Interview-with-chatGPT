@@ -12,6 +12,7 @@ import type { TextToSpeechRef } from '../types/speech';
 import LiveTranscript from './LiveTranscript';
 import useDeepgramLive from '../hooks/useDeepgramLive';
 import useTranscriptBuffer from '../hooks/useTranscriptBuffer';
+import { isQuestion } from '../utils/questionDetection';
 
 export default function InterviewDashboard() {
     const [currentQuestion, setCurrentQuestion] = useState('');
@@ -55,14 +56,27 @@ export default function InterviewDashboard() {
 
     // Live transcript buffered (dedup interim vs final)
     const { segments, upsertTranscript } = useTranscriptBuffer();
-    // Single Deepgram session: prefer system audio (them), fallback to mic (me)
-    const useSystemFirst = !!systemStream;
+
+    // Run two sessions so both speakers appear regardless of which stream is available
+    // System/tab audio → 'them'
     useDeepgramLive({
-        stream: useSystemFirst ? systemStream : micStream || null,
-        enabled: (!!systemStream) || (isListening && !!micStream),
+        stream: systemStream || null,
+        enabled: !!systemStream,
         onTranscript: ({ text, isFinal }) => {
-            const speaker = useSystemFirst ? 'them' : 'me';
-            upsertTranscript({ speaker, text, isFinal });
+            upsertTranscript({ speaker: 'them', text, isFinal });
+            if (isFinal && isQuestion(text)) {
+                setCurrentQuestion(text);
+                addQuestion(text);
+            }
+        },
+    });
+
+    // Microphone → 'me'
+    useDeepgramLive({
+        stream: micStream || null,
+        enabled: !!micStream,
+        onTranscript: ({ text, isFinal }) => {
+            upsertTranscript({ speaker: 'me', text, isFinal });
         },
     });
 
