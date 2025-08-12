@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import deepgramService, { type DeepgramTranscript } from '../services/deepgram'
 
 export interface UseDeepgramLiveOptions {
@@ -7,67 +7,32 @@ export interface UseDeepgramLiveOptions {
     onTranscript: (t: DeepgramTranscript) => void
 }
 
-export interface UseDeepgramLiveReturn {
-    connected: boolean
-    error: string | null
-}
+// Very simple hook: starts/stops a single Deepgram session for a stream
+export interface UseDeepgramLiveReturn { }
 
 /**
  * Manages a Deepgram live session for a given MediaStream. Starts/stops with `enabled`.
  */
 export const useDeepgramLive = ({ stream, enabled, onTranscript }: UseDeepgramLiveOptions): UseDeepgramLiveReturn => {
-    const cleanupRef = useRef<(() => void) | null>(null)
-    const connectingRef = useRef(false)
-    const [connected, setConnected] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    // Stabilize handler to avoid reconnects on every render
+    const handlerRef = useRef<(t: DeepgramTranscript) => void>(() => { })
+    useEffect(() => { handlerRef.current = onTranscript }, [onTranscript])
 
     useEffect(() => {
-        if (!enabled || !stream) {
-            if (cleanupRef.current) {
-                cleanupRef.current()
-                cleanupRef.current = null
-            }
-            connectingRef.current = false
-            setConnected(false)
-            return
-        }
-
-        if (!deepgramService.isConfigured()) {
-            setError('Deepgram is not configured')
-            return
-        }
-
+        if (!enabled || !stream || !deepgramService.isConfigured()) return;
+        let canceled = false;
+        let stop: (() => void) | null = null;
         try {
-            if (connectingRef.current || cleanupRef.current) return
-            connectingRef.current = true
-            setError(null)
-            const cleanup = deepgramService.startLiveFromStream(stream, {
-                timesliceMs: 150,
-                onTranscript: (t) => {
-                    onTranscript(t)
-                },
-                onError: (err) => setError(typeof err?.message === 'string' ? err.message : 'Deepgram error')
-            })
-            cleanupRef.current = cleanup
-            setConnected(true)
-            connectingRef.current = false
-        } catch (e: any) {
-            setError(e?.message || 'Failed to start Deepgram')
-            setConnected(false)
-            connectingRef.current = false
-        }
+            stop = deepgramService.startLiveFromStream(stream, {
+                timesliceMs: 250,
+                onTranscript: (t) => { if (!canceled) handlerRef.current(t); },
+                onError: () => { }
+            });
+        } catch { }
+        return () => { canceled = true; try { stop && stop(); } catch { } };
+    }, [enabled, stream]);
 
-        return () => {
-            if (cleanupRef.current) {
-                cleanupRef.current()
-                cleanupRef.current = null
-            }
-            connectingRef.current = false
-            setConnected(false)
-        }
-    }, [enabled, stream, onTranscript])
-
-    return { connected, error }
+    return {}
 }
 
 export default useDeepgramLive

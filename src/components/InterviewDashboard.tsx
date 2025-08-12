@@ -1,8 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { BarChart3, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import SpeechRecognition from './SpeechRecognition';
 import ResponseGenerator from './ResponseGenerator';
-import ConversationHistory from './ConversationHistory';
 import TextToSpeech from './TextToSpeech';
 import OpenAIConfig from './OpenAIConfig';
 import DocumentManager from './DocumentManager';
@@ -11,7 +10,6 @@ import { useMicrophone } from '../hooks/useMicrophone';
 import { useSystemAudio } from '../hooks/useSystemAudio';
 import type { TextToSpeechRef } from '../types/speech';
 import LiveTranscript from './LiveTranscript';
-import { isQuestion } from '../utils/questionDetection';
 import useDeepgramLive from '../hooks/useDeepgramLive';
 import useTranscriptBuffer from '../hooks/useTranscriptBuffer';
 
@@ -28,7 +26,7 @@ export default function InterviewDashboard() {
     const textToSpeechRef = useRef<TextToSpeechRef>(null);
 
     // Custom hooks
-    const { conversations, sessionStats, addQuestion, addResponse, clearHistory } = useConversation();
+    const { addQuestion, addResponse } = useConversation();
     const { isListening, toggleListening, transcript, isMicActive, stream: micStream } = useMicrophone({
         onQuestionDetected: (question: string) => {
             console.log('🎤 Question detected in useMicrophone:', question);
@@ -46,10 +44,7 @@ export default function InterviewDashboard() {
         }
     });
 
-    // Keep system-audio listener in sync with voice input toggle
-    useEffect(() => {
-        if (setSystemListening) setSystemListening(isListening);
-    }, [isListening, setSystemListening]);
+    // Decouple system-audio transcription from mic listening: system stays active while sharing
 
     // If system audio sharing is active, mute TTS to avoid capturing our own AI response
     useEffect(() => {
@@ -60,19 +55,14 @@ export default function InterviewDashboard() {
 
     // Live transcript buffered (dedup interim vs final)
     const { segments, upsertTranscript } = useTranscriptBuffer();
-
     // Single Deepgram session: prefer system audio (them), fallback to mic (me)
     const useSystemFirst = !!systemStream;
     useDeepgramLive({
         stream: useSystemFirst ? systemStream : micStream || null,
-        enabled: isListening && (!!systemStream || !!micStream),
-        onTranscript: ({ text, isFinal, startMs, endMs }) => {
+        enabled: (!!systemStream) || (isListening && !!micStream),
+        onTranscript: ({ text, isFinal }) => {
             const speaker = useSystemFirst ? 'them' : 'me';
-            upsertTranscript({ speaker, text, isFinal, startMs, endMs });
-            if (useSystemFirst && isFinal && isQuestion(text)) {
-                setCurrentQuestion(text);
-                addQuestion(text);
-            }
+            upsertTranscript({ speaker, text, isFinal });
         },
     });
 
@@ -80,12 +70,6 @@ export default function InterviewDashboard() {
         setCurrentResponse(response);
         addResponse(response);
     }, [addResponse]);
-
-    const handleClearHistory = useCallback(() => {
-        clearHistory();
-        setCurrentQuestion('');
-        setCurrentResponse('');
-    }, [clearHistory]);
 
     const handleSpeechStateChange = useCallback((playing: boolean, muted: boolean) => {
         setIsResponsePlaying(playing);
@@ -136,11 +120,6 @@ export default function InterviewDashboard() {
                             {/* Session Stats */}
                             <div className="hidden md:flex items-center gap-6 text-sm">
                                 <div className="flex items-center gap-2">
-                                    <BarChart3 className="h-4 w-4 text-blue-400" />
-                                    <span className="text-gray-400">Questions:</span>
-                                    <span className="font-semibold text-gray-200">{sessionStats.questionsAnswered}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
                                     <Zap className="h-4 w-4 text-green-600" />
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${!isMicActive ? 'bg-red-100 text-red-700' :
                                         isListening ? 'bg-green-100 text-green-700' :
@@ -173,11 +152,6 @@ export default function InterviewDashboard() {
                         />
                         {/* Live Transcript */}
                         <LiveTranscript segments={segments} />
-                        {/* Conversation History */}
-                        <ConversationHistory
-                            conversations={conversations}
-                            onClearHistory={handleClearHistory}
-                        />
                         {/* Hidden Text-to-Speech for automatic playback */}
                         <TextToSpeech
                             ref={textToSpeechRef}

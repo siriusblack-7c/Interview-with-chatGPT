@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-
+import { MessageCircle } from 'lucide-react'
 export type SpeakerId = 'me' | 'them'
 
 export interface TranscriptSegment {
@@ -24,11 +24,15 @@ export default function LiveTranscript({ segments }: LiveTranscriptProps) {
         if (!s.isFinal) continue
         const last = finalizedRows[finalizedRows.length - 1]
         const incoming = s.text.replace(/\s+/g, ' ').trim()
+        const incomingCmp = incoming.toLowerCase()
         if (last && last.speaker === s.speaker) {
-            // Prevent duplicated tail when DG final repeats the last phrase
+            // Prefer the longer phrase when one contains the other to avoid duplicated tails
             const prev = last.text
-            if (incoming.startsWith(prev)) {
+            const prevCmp = prev.toLowerCase()
+            if (incomingCmp.startsWith(prevCmp) || incomingCmp.includes(prevCmp)) {
                 last.text = incoming
+            } else if (prevCmp.includes(incomingCmp)) {
+                last.text = prev
             } else {
                 last.text = `${prev} ${incoming}`.replace(/\s+/g, ' ').trim()
             }
@@ -72,6 +76,12 @@ export default function LiveTranscript({ segments }: LiveTranscriptProps) {
 
     return (
         <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-4 h-64 overflow-y-auto" ref={scrollRef}>
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
+                    <MessageCircle className="h-5 w-5 text-green-600" />
+                    Live Transcript
+                </h3>
+            </div>
             {displayRows.length === 0 ? (
                 <p className="text-sm text-gray-500">Live transcript will appear here.</p>
             ) : (

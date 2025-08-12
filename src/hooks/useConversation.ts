@@ -8,19 +8,8 @@ export interface ConversationItem {
     isFinalTranscript?: boolean;
 }
 
-export interface SessionStats {
-    questionsAnswered: number;
-    avgResponseTime: number;
-    sessionDuration: number;
-}
-
 export const useConversation = () => {
     const [conversations, setConversations] = useState<ConversationItem[]>([]);
-    const [sessionStats, setSessionStats] = useState<SessionStats>({
-        questionsAnswered: 0,
-        avgResponseTime: 0,
-        sessionDuration: 0
-    });
 
     // No-op: Questions are not stored in history; we also do not update question stats.
     const addQuestion = useCallback((_: string) => {
@@ -55,23 +44,12 @@ export const useConversation = () => {
                 } as ConversationItem,
             ];
         });
-    }, []);
-
-    const clearHistory = useCallback(() => {
-        setConversations([]);
-        setSessionStats({
-            questionsAnswered: 0,
-            avgResponseTime: 0,
-            sessionDuration: 0
-        });
-    }, []);
+    }, []); 
 
     return {
         conversations,
-        sessionStats,
         addQuestion,
         addResponse,
         addOrUpdateTranscript,
-        clearHistory
     };
 };

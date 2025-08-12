@@ -1,29 +1,21 @@
 import { useCallback, useRef, useState } from 'react'
 import type { TranscriptSegment, SpeakerId } from '../components/LiveTranscript'
 
-type WordUnit = { text: string; startMs: number; endMs: number }
-
 interface UpsertArgs {
     speaker: SpeakerId
     text: string
     isFinal: boolean
-    words?: WordUnit[]
 }
 
 export default function useTranscriptBuffer() {
     const [segments, setSegments] = useState<TranscriptSegment[]>([])
 
-    // Per-speaker rolling state
-    const confirmedBySpeaker = useRef<Partial<Record<SpeakerId, WordUnit[]>>>({})
-    const commitIdxBySpeaker = useRef<Partial<Record<SpeakerId, number>>>({})
-    const interimTextBySpeaker = useRef<Partial<Record<SpeakerId, string>>>({})
-
-    // Finals container; we keep finalized sentence rows here to avoid rebuilding the whole array frequently
+    // Minimal state: finals + interim text per speaker
     const finalRows = useRef<TranscriptSegment[]>([])
+    const interimText = useRef<Partial<Record<SpeakerId, string>>>({})
     const scheduled = useRef(false)
 
     const normalize = (s: string) => s.replace(/\s+/g, ' ').trim()
-    const joinWords = (ws: WordUnit[]) => ws.map(w => w.text).join(' ').replace(/\s+/g, ' ').trim()
 
     const flush = () => {
         scheduled.current = false
@@ -38,8 +30,8 @@ export default function useTranscriptBuffer() {
             else rows.push(seg)
         }
 
-            ; (Object.keys(interimTextBySpeaker.current) as SpeakerId[]).forEach(sp => {
-                const txt = interimTextBySpeaker.current[sp]
+            ; (Object.keys(interimText.current) as SpeakerId[]).forEach(sp => {
+                const txt = interimText.current[sp]
                 if (typeof txt === 'string') pushOrUpdateInterim(sp, txt)
             })
 
@@ -53,64 +45,56 @@ export default function useTranscriptBuffer() {
     const scheduleFlush = () => {
         if (scheduled.current) return
         scheduled.current = true
-        requestAnimationFrame(flush)
+        // Use setTimeout to avoid background-tab rAF throttling
+        setTimeout(flush, 0)
     }
 
-    const upsertTranscript = useCallback(({ speaker, text, isFinal, words }: UpsertArgs) => {
-        const incomingText = normalize(text)
-        if (!incomingText) return
-        const incomingWords = Array.isArray(words) && words.length > 0 ? words : null
+    const upsertTranscript = useCallback(({ speaker, text, isFinal }: UpsertArgs) => {
+        const incoming = normalize(text)
+        const incomingCmp = incoming.toLowerCase()
+        if (!incoming) return
+        const timestamp = Date.now()
 
-        // Initialize speaker state
-        const confirmed = (confirmedBySpeaker.current[speaker] ||= [])
-        let commitIdx = (commitIdxBySpeaker.current[speaker] ||= 0)
-
-        if (incomingWords) {
-            const lastEnd = confirmed.length ? confirmed[confirmed.length - 1].endMs : -1
-            for (const w of incomingWords) {
-                if (w.endMs > lastEnd) confirmed.push(w)
-            }
-
-            // Commit full sentences since last commit
-            for (let i = commitIdx; i < confirmed.length; i++) {
-                if (/[.!?]$/.test(confirmed[i].text)) {
-                    const sentence = confirmed.slice(commitIdx, i + 1)
-                    const textVal = joinWords(sentence)
-                    if (textVal) finalRows.current.push({ id: `${speaker}-final-${Date.now()}-${i}`, speaker, text: textVal, isFinal: true })
-                    commitIdx = i + 1
-                }
-            }
-            commitIdxBySpeaker.current[speaker] = commitIdx
-
-            // Interim tail after last commit
-            let tail = confirmed.slice(commitIdx)
-            if (isFinal && tail.length) {
-                // Commit tail immediately on final packet
-                const textVal = joinWords(tail)
-                if (textVal) finalRows.current.push({ id: `${speaker}-final-${Date.now()}-tail`, speaker, text: textVal, isFinal: true })
-                commitIdxBySpeaker.current[speaker] = confirmed.length
-                tail = []
-            }
-            interimTextBySpeaker.current[speaker] = joinWords(tail)
-            scheduleFlush()
-            return
-        }
-
-        // Fallback without word timings
         if (isFinal) {
-            finalRows.current.push({ id: `${speaker}-final-${Date.now()}`, speaker, text: incomingText, isFinal: true })
-            interimTextBySpeaker.current[speaker] = ''
+            // If the last final for this speaker is a prefix/contained, replace it instead of pushing a new row
+            const lastIdx = (() => {
+                for (let i = finalRows.current.length - 1; i >= 0; i--) {
+                    if (finalRows.current[i].speaker === speaker) return i
+                }
+                return -1
+            })()
+            if (lastIdx >= 0) {
+                const prev = finalRows.current[lastIdx].text
+                const prevCmp = prev.toLowerCase()
+                if (prev === incoming) {
+                    // No change; avoid duplicate updates
+                    interimText.current[speaker] = ''
+                    scheduleFlush()
+                    return
+                }
+                if (incomingCmp.startsWith(prevCmp) || incomingCmp.includes(prevCmp)) {
+                    finalRows.current[lastIdx] = { id: `${speaker}-final-${timestamp}`, speaker, text: incoming, isFinal: true }
+                } else if (prevCmp.includes(incomingCmp)) {
+                    // keep prev, as it's already more complete
+                    finalRows.current[lastIdx] = { id: `${speaker}-final-${timestamp}`, speaker, text: prev, isFinal: true }
+                } else {
+                    // distinct sentence: append a new row
+                    finalRows.current.push({ id: `${speaker}-final-${timestamp}`, speaker, text: incoming, isFinal: true })
+                }
+            } else {
+                finalRows.current.push({ id: `${speaker}-final-${timestamp}`, speaker, text: incoming, isFinal: true })
+            }
+            interimText.current[speaker] = ''
+            // Render finals immediately for snappier UI
+            flush()
         } else {
-            // Show full interim text alongside finalized content
-            interimTextBySpeaker.current[speaker] = incomingText
+            interimText.current[speaker] = incoming
+            scheduleFlush()
         }
-        scheduleFlush()
     }, [])
 
     const clear = useCallback(() => {
-        confirmedBySpeaker.current = {}
-        commitIdxBySpeaker.current = {}
-        interimTextBySpeaker.current = {}
+        interimText.current = {}
         finalRows.current = []
         setSegments([])
     }, [])
