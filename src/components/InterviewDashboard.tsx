@@ -58,8 +58,7 @@ export default function InterviewDashboard() {
     // Live transcript buffered (dedup interim vs final)
     const { segments, upsertTranscript } = useTranscriptBuffer();
 
-    // Run two sessions so both speakers appear regardless of which stream is available
-    // System/tab audio → 'them'
+    // Single Deepgram live session for system/tab audio → 'them'
     useDeepgramLive({
         stream: systemStream || null,
         enabled: !!systemStream,
@@ -72,14 +71,11 @@ export default function InterviewDashboard() {
         },
     });
 
-    // Microphone → 'me'
-    useDeepgramLive({
-        stream: micStream || null,
-        enabled: !!micStream,
-        onTranscript: ({ text, isFinal }) => {
-            upsertTranscript({ speaker: 'me', text, isFinal });
-        },
-    });
+    // Use Web Speech API output for 'me' to avoid needing a second Deepgram session
+    useEffect(() => {
+        if (!transcript) return;
+        upsertTranscript({ speaker: 'me', text: transcript, isFinal: true });
+    }, [transcript, upsertTranscript]);
 
     const handleResponseGenerated = useCallback((response: string) => {
         setCurrentResponse(response);
@@ -212,7 +208,7 @@ export default function InterviewDashboard() {
                             setSystemListening={setSystemListening}
                         />
                         {/* Conversation History */}
-                        <ConversationHistory conversations={conversations} onClearHistory={clearHistory}  />
+                        <ConversationHistory conversations={conversations} onClearHistory={clearHistory} />
                         {/* OpenAI Configuration */}
                         <OpenAIConfig onConfigChange={setOpenaiConfigured} />
                     </div>
