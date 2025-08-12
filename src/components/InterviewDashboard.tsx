@@ -13,6 +13,7 @@ import LiveTranscript from './LiveTranscript';
 import useDeepgramLive from '../hooks/useDeepgramLive';
 import useTranscriptBuffer from '../hooks/useTranscriptBuffer';
 import { isQuestion } from '../utils/questionDetection';
+import ConversationHistory from './ConversationHistory';
 
 export default function InterviewDashboard() {
     const [currentQuestion, setCurrentQuestion] = useState('');
@@ -27,7 +28,7 @@ export default function InterviewDashboard() {
     const textToSpeechRef = useRef<TextToSpeechRef>(null);
 
     // Custom hooks
-    const { addQuestion, addResponse } = useConversation();
+    const { addQuestion, addResponse, conversations, clearHistory } = useConversation();
     const { isListening, toggleListening, transcript, isMicActive, stream: micStream } = useMicrophone({
         onQuestionDetected: (question: string) => {
             console.log('🎤 Question detected in useMicrophone:', question);
@@ -210,6 +211,8 @@ export default function InterviewDashboard() {
                             }}
                             setSystemListening={setSystemListening}
                         />
+                        {/* Conversation History */}
+                        <ConversationHistory conversations={conversations} onClearHistory={clearHistory}  />
                         {/* OpenAI Configuration */}
                         <OpenAIConfig onConfigChange={setOpenaiConfigured} />
                     </div>

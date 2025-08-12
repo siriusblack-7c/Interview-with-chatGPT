@@ -11,14 +11,22 @@ export interface ConversationItem {
 export const useConversation = () => {
     const [conversations, setConversations] = useState<ConversationItem[]>([]);
 
-    // No-op: Questions are not stored in history; we also do not update question stats.
-    const addQuestion = useCallback((_: string) => {
-        // intentionally empty
+    const addQuestion = useCallback((q: string) => {
+        setConversations(prev => ([
+            ...prev,
+            { id: `q-${Date.now()}`, type: 'question', content: q, timestamp: new Date() } as ConversationItem,
+        ]));
     }, []);
 
-    // No-op: OpenAI responses are not stored in history.
-    const addResponse = useCallback((_: string) => {
-        // intentionally empty
+    const addResponse = useCallback((r: string) => {
+        setConversations(prev => ([
+            ...prev,
+            { id: `r-${Date.now()}`, type: 'response', content: r, timestamp: new Date() } as ConversationItem,
+        ]));
+    }, []);
+
+    const clearHistory = useCallback(() => {
+        setConversations([]);
     }, []);
 
     const addOrUpdateTranscript = useCallback((text: string, isFinal: boolean) => {
@@ -44,12 +52,13 @@ export const useConversation = () => {
                 } as ConversationItem,
             ];
         });
-    }, []); 
+    }, []);
 
     return {
         conversations,
         addQuestion,
         addResponse,
         addOrUpdateTranscript,
+        clearHistory,
     };
 };

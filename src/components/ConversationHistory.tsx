@@ -1,9 +1,9 @@
-import { MessageCircle, Clock } from 'lucide-react';
+import { MessageCircle, Clock, HelpCircle, Bot } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 interface ConversationItem {
     id: string;
-    type: 'transcript';
+    type: 'transcript' | 'question' | 'response';
     content: string;
     timestamp: Date;
     isFinalTranscript?: boolean;
@@ -32,14 +32,14 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
         }
     }, [conversations]);
 
-    const visibleItems = conversations.filter((item) => item.type === 'transcript');
+    const visibleItems = conversations;
 
     return (
         <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6 h-[calc(100vh-350px)] flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-green-600" />
-                    Live Transcript
+                    Conversation History(With AI)
                 </h3>
                 {visibleItems.length > 0 && (
                     <button
@@ -58,23 +58,25 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
                 {visibleItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
                         <MessageCircle className="h-12 w-12 text-gray-300 mb-3" />
-                        <p className="text-center">No transcript yet</p>
-                        <p className="text-sm text-center">Start speaking to see live transcript.</p>
+                        <p className="text-center">No conversation history yet</p>
+                        <p className="text-sm text-center">Start speaking to see conversation history.</p>
                     </div>
                 ) : (
                     visibleItems.map((item) => (
                         <div
                             key={item.id}
-                            className={`flex gap-3 p-3 rounded-lg transition-all hover:shadow-sm bg-[#404040] border-l-4 border-yellow-500`}
+                            className={`flex gap-3 p-3 rounded-lg transition-all hover:shadow-sm bg-[#404040] border-l-4 ${item.type === 'question' ? 'border-blue-500' : item.type === 'response' ? 'border-purple-500' : 'border-yellow-500'
+                                }`}
                         >
-                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-yellow-500 text-white`}>
-                                <MessageCircle className="h-4 w-4" />
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${item.type === 'question' ? 'bg-blue-500' : item.type === 'response' ? 'bg-purple-500' : 'bg-yellow-500'
+                                } text-white`}>
+                                {item.type === 'question' ? <HelpCircle className="h-4 w-4" /> : item.type === 'response' ? <Bot className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
                             </div>
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className={`text-sm font-medium text-yellow-600`}>
-                                        Live Transcript
+                                    <span className={`text-sm font-medium ${item.type === 'question' ? 'text-blue-400' : item.type === 'response' ? 'text-purple-400' : 'text-yellow-600'}`}>
+                                        {item.type === 'question' ? 'Question' : item.type === 'response' ? 'GPT Response' : 'Live Transcript'}
                                     </span>
                                     <div className="flex items-center gap-1 text-xs text-gray-400">
                                         <Clock className="h-3 w-3" />
