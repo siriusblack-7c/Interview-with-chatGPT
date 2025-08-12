@@ -65,13 +65,10 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
 
                         if (finalTranscript) {
                             setTranscript(finalTranscript);
-                            console.log('Transcript received:', finalTranscript);
-                            console.log('Is listening:', isListeningRef.current);
-                            console.log('Is question:', isQuestion(finalTranscript));
+                            // noisy logs removed for production
 
                             // Only process if listening is enabled
                             if (isListeningRef.current && isQuestion(finalTranscript)) {
-                                console.log('Question detected! Calling onQuestionDetected');
                                 onQuestionDetected(finalTranscript);
                             }
                         }
@@ -162,6 +159,7 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
         error,
         toggleListening,
         startListening,
-        stopListening
+        stopListening,
+        stream: streamRef.current,
     };
 };

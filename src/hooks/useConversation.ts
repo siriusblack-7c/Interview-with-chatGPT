@@ -2,9 +2,10 @@ import { useState, useCallback } from 'react';
 
 export interface ConversationItem {
     id: string;
-    type: 'question' | 'response';
+    type: 'question' | 'response' | 'transcript';
     content: string;
     timestamp: Date;
+    isFinalTranscript?: boolean;
 }
 
 export interface SessionStats {
@@ -21,30 +22,39 @@ export const useConversation = () => {
         sessionDuration: 0
     });
 
-    const addQuestion = useCallback((question: string) => {
-        const questionItem: ConversationItem = {
-            id: `q-${Date.now()}`,
-            type: 'question',
-            content: question,
-            timestamp: new Date()
-        };
-
-        setConversations(prev => [...prev, questionItem]);
-        setSessionStats(prev => ({
-            ...prev,
-            questionsAnswered: prev.questionsAnswered + 1
-        }));
+    // No-op: Questions are not stored in history; we also do not update question stats.
+    const addQuestion = useCallback((_: string) => {
+        // intentionally empty
     }, []);
 
-    const addResponse = useCallback((response: string) => {
-        const responseItem: ConversationItem = {
-            id: `r-${Date.now()}`,
-            type: 'response',
-            content: response,
-            timestamp: new Date()
-        };
+    // No-op: OpenAI responses are not stored in history.
+    const addResponse = useCallback((_: string) => {
+        // intentionally empty
+    }, []);
 
-        setConversations(prev => [...prev, responseItem]);
+    const addOrUpdateTranscript = useCallback((text: string, isFinal: boolean) => {
+        setConversations(prev => {
+            // Update the latest transcript item if it exists and isn't final yet
+            for (let i = prev.length - 1; i >= 0; i--) {
+                const item = prev[i];
+                if (item.type === 'transcript' && !item.isFinalTranscript) {
+                    const updated = [...prev];
+                    updated[i] = { ...item, content: text, isFinalTranscript: isFinal, timestamp: new Date() };
+                    return updated;
+                }
+            }
+            // Otherwise append a new transcript item
+            return [
+                ...prev,
+                {
+                    id: `t-${Date.now()}`,
+                    type: 'transcript',
+                    content: text,
+                    timestamp: new Date(),
+                    isFinalTranscript: isFinal,
+                } as ConversationItem,
+            ];
+        });
     }, []);
 
     const clearHistory = useCallback(() => {
@@ -61,6 +71,7 @@ export const useConversation = () => {
         sessionStats,
         addQuestion,
         addResponse,
+        addOrUpdateTranscript,
         clearHistory
     };
 };

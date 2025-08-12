@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { BarChart3, Zap } from 'lucide-react';
 import SpeechRecognition from './SpeechRecognition';
 import ResponseGenerator from './ResponseGenerator';
@@ -10,6 +10,10 @@ import { useConversation } from '../hooks/useConversation';
 import { useMicrophone } from '../hooks/useMicrophone';
 import { useSystemAudio } from '../hooks/useSystemAudio';
 import type { TextToSpeechRef } from '../types/speech';
+import LiveTranscript from './LiveTranscript';
+import { isQuestion } from '../utils/questionDetection';
+import useDeepgramLive from '../hooks/useDeepgramLive';
+import useTranscriptBuffer from '../hooks/useTranscriptBuffer';
 
 export default function InterviewDashboard() {
     const [currentQuestion, setCurrentQuestion] = useState('');
@@ -25,7 +29,7 @@ export default function InterviewDashboard() {
 
     // Custom hooks
     const { conversations, sessionStats, addQuestion, addResponse, clearHistory } = useConversation();
-    const { isListening, toggleListening, transcript, isMicActive } = useMicrophone({
+    const { isListening, toggleListening, transcript, isMicActive, stream: micStream } = useMicrophone({
         onQuestionDetected: (question: string) => {
             console.log('🎤 Question detected in useMicrophone:', question);
             setCurrentQuestion(question);
@@ -34,7 +38,7 @@ export default function InterviewDashboard() {
     });
 
     // System audio capture (tab/system) for 2-way audio
-    const { isSharing, startShare, stopShare, setListening: setSystemListening } = useSystemAudio({
+    const { isSharing, startShare, stopShare, setListening: setSystemListening, stream: systemStream } = useSystemAudio({
         onQuestionDetected: (question: string) => {
             console.log('🖥️ Question detected from system audio:', question);
             setCurrentQuestion(question);
@@ -43,11 +47,34 @@ export default function InterviewDashboard() {
     });
 
     // Keep system-audio listener in sync with voice input toggle
-    // When user enables voice input, we also let system-audio chunks be processed
-    // When disabled, system audio can keep streaming but will not trigger detection
-    if (setSystemListening) {
-        setSystemListening(isListening);
-    }
+    useEffect(() => {
+        if (setSystemListening) setSystemListening(isListening);
+    }, [isListening, setSystemListening]);
+
+    // If system audio sharing is active, mute TTS to avoid capturing our own AI response
+    useEffect(() => {
+        if (isSharing && textToSpeechRef.current) {
+            textToSpeechRef.current.setMuted(true);
+        }
+    }, [isSharing]);
+
+    // Live transcript buffered (dedup interim vs final)
+    const { segments, upsertTranscript } = useTranscriptBuffer();
+
+    // Single Deepgram session: prefer system audio (them), fallback to mic (me)
+    const useSystemFirst = !!systemStream;
+    useDeepgramLive({
+        stream: useSystemFirst ? systemStream : micStream || null,
+        enabled: isListening && (!!systemStream || !!micStream),
+        onTranscript: ({ text, isFinal, startMs, endMs }) => {
+            const speaker = useSystemFirst ? 'them' : 'me';
+            upsertTranscript({ speaker, text, isFinal, startMs, endMs });
+            if (useSystemFirst && isFinal && isQuestion(text)) {
+                setCurrentQuestion(text);
+                addQuestion(text);
+            }
+        },
+    });
 
     const handleResponseGenerated = useCallback((response: string) => {
         setCurrentResponse(response);
@@ -144,6 +171,8 @@ export default function InterviewDashboard() {
                             isMicActive={isMicActive}
                             isSharing={isSharing}
                         />
+                        {/* Live Transcript */}
+                        <LiveTranscript segments={segments} />
                         {/* Conversation History */}
                         <ConversationHistory
                             conversations={conversations}

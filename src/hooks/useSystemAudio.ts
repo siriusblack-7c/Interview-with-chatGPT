@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import openaiService from '../services/openai';
+// Whisper fallback removed; Deepgram is the primary path
+// import deepgramService from '../services/deepgram';
 
 interface UseSystemAudioOptions {
     onQuestionDetected: (question: string) => void;
@@ -10,7 +11,7 @@ export const useSystemAudio = ({ onQuestionDetected }: UseSystemAudioOptions) =>
     const [error, setError] = useState<string | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const recorderRef = useRef<MediaRecorder | null>(null);
-    const chunksRef = useRef<Blob[]>([]);
+    // removed fallback chunking
     const isListeningRef = useRef<boolean>(false);
 
     const startShare = useCallback(async () => {
@@ -54,43 +55,7 @@ export const useSystemAudio = ({ onQuestionDetected }: UseSystemAudioOptions) =>
             streamRef.current = stream;
             setIsSharing(true);
 
-            // Pick a recorder mime type supported by the browser
-            const mimeCandidates = [
-                'audio/webm;codecs=opus',
-                'audio/webm',
-                'video/webm;codecs=vp9,opus',
-                'video/webm;codecs=vp8,opus',
-                'video/webm',
-            ];
-            const supported = mimeCandidates.find(t => MediaRecorder.isTypeSupported(t));
-            const recorder = new MediaRecorder(stream, supported ? { mimeType: supported } : undefined);
-            recorderRef.current = recorder;
-
-            recorder.ondataavailable = async (e: BlobEvent) => {
-                if (!isListeningRef.current) return; // Gate by listen state
-                if (e.data && e.data.size > 0) {
-                    const blob = new Blob([e.data], { type: e.data.type });
-                    try {
-                        const text = await openaiService.transcribeAudio(blob);
-                        if (!text) return;
-                        // Single-call: detect and answer
-                        const result = await openaiService.detectQuestionAndAnswer(text);
-                        if (result.isQuestion && result.question) {
-                            onQuestionDetected(result.question);
-                            // Optionally we could emit the answer directly here via a callback
-                            // but current app flows through InterviewDashboard -> ResponseGenerator
-                        }
-                    } catch (err: any) {
-                        console.warn('Transcription/detect chunk failed:', err.message);
-                    }
-                }
-            };
-
-            recorder.onstop = () => {
-                chunksRef.current = [];
-            };
-
-            recorder.start(2000); // small chunks every 2s
+            // Deepgram is used for live streaming; local fallback is removed
         } catch (err: any) {
             console.error('System audio share failed:', err);
             setError(err.message || 'Failed to share system audio');
@@ -133,6 +98,8 @@ export const useSystemAudio = ({ onQuestionDetected }: UseSystemAudioOptions) =>
         error,
         startShare,
         stopShare,
-        setListening
+        setListening,
+        // expose stream for Deepgram
+        stream: streamRef.current
     };
 };
