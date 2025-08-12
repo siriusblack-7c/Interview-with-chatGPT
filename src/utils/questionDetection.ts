@@ -1,9 +1,9 @@
 import nlp from 'compromise'
 
 export const QUESTION_PATTERNS = {
-    questionWords: ['what is', 'what are', 'what do', 'what does', 'what did', 'what will', 'what would', 'what should', 'what could', 'what might', 'what must', "what's", "how's", "why's", "when's", "where's", "who's", "which's", "whose's"],
+    questionWords: ['what', 'how', 'why', 'when', 'where', 'who', 'which', 'whose', "what's", "how's", "why's", "when's", "where's", "who's", "which's", "whose's"],
     modalVerbs: ['can', 'could', 'would', 'should', 'might', 'may', 'must', 'will'],
-    questionPhrases: ['do you', 'can you', 'could you', 'would you', 'should you', 'tell me', 'please tell', 'can I', 'could I', 'would I', 'should I', 'might I', 'may I', 'must I', 'will I'],
+    questionPhrases: ['do you', 'can you', 'could you', 'would you', 'should you', 'tell me', 'please tell'],
     endsWithQuestion: (text: string) => text.trim().endsWith('?'),
 }
 

@@ -18,17 +18,17 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
     // Mirrors the latest isListening value to avoid stale closure inside onresult/onend
     const isListeningRef = useRef<boolean>(false);
 
-    // Initialize microphone stream on component mount (independent of Web Speech API)
+    // Initialize microphone stream on component mount (always request mic stream; SpeechRecognition is optional)
     useEffect(() => {
         const initializeMicrophone = async () => {
             try {
-                // Always get microphone stream first so Deepgram can use it even if Web Speech API is unavailable
+                // Always acquire microphone stream for Deepgram, independent of Web Speech API
                 const stream = await navigator.mediaDevices.getUserMedia({
                     audio: {
                         echoCancellation: true,
                         noiseSuppression: true,
-                        autoGainControl: true,
-                    },
+                        autoGainControl: true
+                    }
                 });
 
                 streamRef.current = stream;
@@ -42,11 +42,11 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                 silentAudioRef.current = silentAudio;
                 silentAudio.play().catch(() => { });
 
-                // Optional: Web Speech API for local question detection convenience
-                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                // Optional: set up Web Speech recognition if supported (for local question detection)
+                const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+                if (SR) {
                     setIsSupported(true);
-                    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-                    recognitionRef.current = new SpeechRecognition();
+                    recognitionRef.current = new SR();
                     recognitionRef.current.continuous = true;
                     recognitionRef.current.interimResults = true;
                     recognitionRef.current.lang = 'en-US';
@@ -59,16 +59,16 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                         }
                         if (finalTranscript) {
                             setTranscript(finalTranscript);
-                            if (isListeningRef.current && isQuestion(finalTranscript)) onQuestionDetected(finalTranscript);
+                            if (isListeningRef.current && isQuestion(finalTranscript)) {
+                                onQuestionDetected(finalTranscript);
+                            }
                         }
                     };
-
                     recognitionRef.current.onend = () => {
                         if (isListeningRef.current) {
                             try { recognitionRef.current.start(); } catch { }
                         }
                     };
-
                     recognitionRef.current.onerror = (event: any) => {
                         console.log('Speech recognition error:', event.error);
                         setError(`Speech recognition error: ${event.error}`);
