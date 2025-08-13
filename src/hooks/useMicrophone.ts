@@ -17,6 +17,18 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
     const silentAudioRef = useRef<HTMLAudioElement | null>(null);
     // Mirrors the latest isListening value to avoid stale closure inside onresult/onend
     const isListeningRef = useRef<boolean>(false);
+    // Make restart behavior resilient to 'aborted' errors and rapid restarts
+    const restartTimerRef = useRef<number | null>(null);
+    const manuallyStoppedRef = useRef<boolean>(false);
+
+    const scheduleRestart = (delayMs = 400) => {
+        try { if (restartTimerRef.current) window.clearTimeout(restartTimerRef.current); } catch { }
+        if (manuallyStoppedRef.current) return;
+        restartTimerRef.current = window.setTimeout(() => {
+            if (manuallyStoppedRef.current) return;
+            try { recognitionRef.current?.start(); } catch { }
+        }, delayMs) as unknown as number;
+    };
 
     // Initialize microphone stream on component mount (always request mic stream; SpeechRecognition is optional)
     useEffect(() => {
@@ -50,29 +62,44 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                     recognitionRef.current.continuous = true;
                     recognitionRef.current.interimResults = true;
                     recognitionRef.current.lang = 'en-US';
+                    try { recognitionRef.current.maxAlternatives = 1; } catch { }
 
                     recognitionRef.current.onresult = (event: any) => {
-                        let finalTranscript = '';
+                        let interim = '';
+                        let finalText = '';
                         for (let i = event.resultIndex; i < event.results.length; i++) {
-                            const t = event.results[i][0].transcript;
-                            if (event.results[i].isFinal) finalTranscript += t;
+                            const t = event.results[i][0].transcript as string;
+                            if (event.results[i].isFinal) finalText += t;
+                            else interim += t;
                         }
-                        if (finalTranscript) {
-                            setTranscript(finalTranscript);
-                            if (isListeningRef.current && isQuestion(finalTranscript)) {
-                                onQuestionDetected(finalTranscript);
+                        if (interim) {
+                            try { (window as any).__micLive = { text: interim, isFinal: false } } catch { }
+                        }
+                        if (finalText) {
+                            setTranscript(finalText);
+                            try { (window as any).__micLive = { text: finalText, isFinal: true } } catch { }
+                            if (isListeningRef.current && isQuestion(finalText)) {
+                                onQuestionDetected(finalText);
                             }
                         }
                     };
                     recognitionRef.current.onend = () => {
-                        if (isListeningRef.current) {
-                            try { recognitionRef.current.start(); } catch { }
-                        }
+                        // Restart only when actively listening
+                        if (isListeningRef.current) scheduleRestart(400);
                     };
                     recognitionRef.current.onerror = (event: any) => {
-                        console.log('Speech recognition error:', event.error);
-                        setError(`Speech recognition error: ${event.error}`);
+                        const err = event?.error || 'unknown';
+                        // Reduce noisy logs while still surfacing non-benign errors
+                        if (err !== 'aborted' && err !== 'no-speech' && err !== 'network') {
+                            console.log('Speech recognition error:', err);
+                            setError(`Speech recognition error: ${err}`);
+                        }
+                        // For transient errors, attempt a gentle restart only if listening
+                        if (isListeningRef.current && (err === 'aborted' || err === 'no-speech' || err === 'network')) {
+                            scheduleRestart(500);
+                        }
                     };
+                    // Do not auto-start here; start when user enables listening
                 } else {
                     setIsSupported(false);
                 }
@@ -86,6 +113,8 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
 
         // Cleanup function
         return () => {
+            manuallyStoppedRef.current = true;
+            try { if (restartTimerRef.current) window.clearTimeout(restartTimerRef.current); } catch { }
             if (recognitionRef.current) {
                 recognitionRef.current.stop();
             }
@@ -99,24 +128,26 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
         };
     }, [onQuestionDetected]);
 
-    // Control speech recognition listening
-    useEffect(() => {
-        try {
-            if (recognitionRef.current) {
-                if (isListening) {
-                    recognitionRef.current.start();
-                } else {
-                    recognitionRef.current.stop();
-                }
-            }
-        } catch (error) {
-            console.log('Error starting/stopping speech recognition:', error);
-        }
-    }, [isListening]);
+    // Do not stop SR based on isListening; only gate onQuestionDetected via isListeningRef
 
     // Keep ref in sync with state
     useEffect(() => {
         isListeningRef.current = isListening;
+    }, [isListening]);
+
+    // Start/stop recognition based on listening state
+    useEffect(() => {
+        const rec = recognitionRef.current;
+        if (!rec) return;
+        if (isListening) {
+            manuallyStoppedRef.current = false;
+            // Start immediately (or ensure restart soon)
+            try { rec.start(); } catch { scheduleRestart(200); }
+        } else {
+            manuallyStoppedRef.current = true;
+            try { rec.stop(); } catch { }
+            try { if (restartTimerRef.current) window.clearTimeout(restartTimerRef.current); } catch { }
+        }
     }, [isListening]);
 
     const toggleListening = useCallback(() => {

@@ -29,7 +29,7 @@ export default function InterviewDashboard() {
 
     // Custom hooks
     const { addQuestion, addResponse, conversations, clearHistory } = useConversation();
-    const { isListening, toggleListening, transcript, isMicActive, stream: micStream } = useMicrophone({
+    const { isListening, toggleListening, transcript, isMicActive } = useMicrophone({
         onQuestionDetected: (question: string) => {
             console.log('🎤 Question detected in useMicrophone:', question);
             setCurrentQuestion(question);
@@ -72,10 +72,12 @@ export default function InterviewDashboard() {
     });
 
     // Use Web Speech API output for 'me' to avoid needing a second Deepgram session
+    // Push microphone interim/final to live transcript for fast local display
     useEffect(() => {
-        if (!transcript) return;
-        upsertTranscript({ speaker: 'me', text: transcript, isFinal: true });
-    }, [transcript, upsertTranscript]);
+        const micLive = (window as any).__micLive as { text: string; isFinal: boolean } | undefined;
+        if (!micLive || !micLive.text) return;
+        upsertTranscript({ speaker: 'me', text: micLive.text, isFinal: micLive.isFinal });
+    });
 
     const handleResponseGenerated = useCallback((response: string) => {
         setCurrentResponse(response);
