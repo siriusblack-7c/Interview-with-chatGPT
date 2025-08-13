@@ -74,7 +74,12 @@ export default function InterviewDashboard() {
     useEffect(() => {
         const micLive = (window as any).__micLive as { text: string; isFinal: boolean } | undefined;
         if (!micLive || !micLive.text) return;
-        if (systemStream && !micLive.isFinal) return; // when sharing, only accept final mic lines
+        // If system audio is active, require strong speech signal before showing 'me'
+        if (systemStream) {
+            const vad = (window as any).__micVAD as { rms: number; ts: number } | undefined;
+            if (!micLive.isFinal) return; // interims off when sharing
+            if (!vad || vad.rms < 0.06) return; // gate weak loopback noise
+        }
         upsertTranscript({ speaker: 'me', text: micLive.text, isFinal: micLive.isFinal });
     });
 

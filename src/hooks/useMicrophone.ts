@@ -11,10 +11,14 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
     const [isSupported, setIsSupported] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [isSpeaking, setIsSpeaking] = useState(false);
 
     const streamRef = useRef<MediaStream | null>(null);
     const recognitionRef = useRef<any>(null);
     const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const vadTimerRef = useRef<number | null>(null);
     // Mirrors the latest isListening value to avoid stale closure inside onresult/onend
     const isListeningRef = useRef<boolean>(false);
 
@@ -44,6 +48,36 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                     silentAudio.muted = true;
                     silentAudio.loop = true;
                     silentAudioRef.current = silentAudio;
+                    // Start silent audio to keep stream active
+                    silentAudio.play().catch(() => { });
+
+                    // Lightweight VAD via RMS energy to distinguish real speech vs loopback
+                    try {
+                        const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+                        audioCtxRef.current = new Ctx();
+                        if (!audioCtxRef.current) throw new Error('AudioContext not initialized');
+                        const source = audioCtxRef.current.createMediaStreamSource(stream);
+                        const analyser = audioCtxRef.current.createAnalyser();
+                        analyser.fftSize = 2048;
+                        analyserRef.current = analyser;
+                        source.connect(analyser);
+                        const data = new Uint8Array(analyser.fftSize);
+                        const tick = () => {
+                            const ctx = audioCtxRef.current;
+                            const analyserNode = analyserRef.current;
+                            if (!analyserNode || !ctx || ctx.state === 'suspended') return;
+                            analyserNode.getByteTimeDomainData(data);
+                            let sum = 0;
+                            for (let i = 0; i < data.length; i++) {
+                                const v = (data[i] - 128) / 128;
+                                sum += v * v;
+                            }
+                            const rms = Math.sqrt(sum / data.length);
+                            setIsSpeaking(rms > 0.04);
+                            try { (window as any).__micVAD = { rms, ts: Date.now() } } catch { }
+                        };
+                        vadTimerRef.current = window.setInterval(tick, 100) as unknown as number;
+                    } catch { }
 
                     // Initialize speech recognition
                     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
@@ -95,8 +129,7 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                         setError(`Speech recognition error: ${event.error}`);
                     };
 
-                    // Start silent audio to keep stream active
-                    silentAudio.play().catch(console.error);
+                    // silentAudio already started
 
                 } else {
                     setError('Speech recognition not supported in this browser');
@@ -121,6 +154,15 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                 silentAudioRef.current.pause();
                 silentAudioRef.current.srcObject = null;
             }
+            if (vadTimerRef.current !== null) {
+                try { window.clearInterval(vadTimerRef.current) } catch { }
+                vadTimerRef.current = null;
+            }
+            try {
+                if (audioCtxRef.current) audioCtxRef.current.close();
+            } catch { }
+            analyserRef.current = null;
+            audioCtxRef.current = null;
         };
     }, [onQuestionDetected]);
 
@@ -164,6 +206,8 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
         error,
         toggleListening,
         startListening,
-        stopListening
+        isSpeaking,
+        stopListening,
+        stream: streamRef.current,
     };
 };
