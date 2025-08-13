@@ -35,19 +35,25 @@ export const createAudioAttribution = ({ isSystemActive, systemBiasMs = 300, vad
             return { speaker: 'me', accept: true }
         }
 
-        // System audio is active. Reduce echo by:
-        // - ignoring interims
-        // - requiring sufficient mic energy
-        // - applying a short bias window after a system event
-        if (!isFinal) return { speaker: 'me', accept: false }
-
-        const energy = typeof rms === 'number' ? rms : 0
-        if (energy < vadThreshold) return { speaker: 'me', accept: false }
-
+        // System audio is active. Reduce echo by using VAD and a short bias window after a system event.
+        const hasRms = typeof rms === 'number' && Number.isFinite(rms)
+        const energy = hasRms ? (rms as number) : undefined
         const elapsed = now() - lastSystemTs
-        if (elapsed <= systemBiasMs) return { speaker: 'me', accept: false }
 
-        return { speaker: 'me', accept: true }
+        // Finals: if user energy is present, allow even inside bias window
+        if (isFinal) {
+            if (hasRms) {
+                return { speaker: 'me', accept: energy! >= vadThreshold }
+            }
+            // Without VAD info, be slightly conservative if within bias window
+            if (elapsed <= systemBiasMs) return { speaker: 'me', accept: false }
+            return { speaker: 'me', accept: true }
+        }
+
+        // Interims: require VAD and being outside the bias window
+        if (!hasRms) return { speaker: 'me', accept: false }
+        if (elapsed <= systemBiasMs) return { speaker: 'me', accept: false }
+        return { speaker: 'me', accept: energy! >= vadThreshold }
     }
 
     return {

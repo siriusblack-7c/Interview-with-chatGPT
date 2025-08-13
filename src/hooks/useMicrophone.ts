@@ -14,6 +14,10 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
 
     const streamRef = useRef<MediaStream | null>(null);
     const recognitionRef = useRef<any>(null);
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+    const vadTimerRef = useRef<number | null>(null);
     const silentAudioRef = useRef<HTMLAudioElement | null>(null);
     // Mirrors the latest isListening value to avoid stale closure inside onresult/onend
     const isListeningRef = useRef<boolean>(false);
@@ -79,14 +83,12 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                         }
                     };
 
-                    // If recognition ends unexpectedly (e.g., silence/no-speech), auto-restart while listening
+                    // Always keep recognition running for live transcript; gate only question detection by isListening
                     recognitionRef.current.onend = () => {
-                        if (isListeningRef.current) {
-                            try {
-                                recognitionRef.current.start();
-                            } catch (_) {
-                                // ignore rapid start errors
-                            }
+                        try {
+                            recognitionRef.current.start();
+                        } catch (_) {
+                            // ignore rapid start errors
                         }
                     };
 
@@ -98,6 +100,37 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                     // Start silent audio to keep stream active
                     silentAudio.play().catch(console.error);
 
+                    // Initialize lightweight VAD to provide RMS energy
+                    try {
+                        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                        const src = ctx.createMediaStreamSource(stream);
+                        const analyser = ctx.createAnalyser();
+                        analyser.fftSize = 2048;
+                        src.connect(analyser);
+                        audioCtxRef.current = ctx;
+                        analyserRef.current = analyser;
+                        sourceRef.current = src;
+
+                        const buf = new Uint8Array(analyser.frequencyBinCount);
+                        const tick = () => {
+                            if (!analyserRef.current) return;
+                            analyserRef.current.getByteTimeDomainData(buf);
+                            let sumSquares = 0;
+                            for (let i = 0; i < buf.length; i++) {
+                                const val = (buf[i] - 128) / 128;
+                                sumSquares += val * val;
+                            }
+                            const rms = Math.sqrt(sumSquares / buf.length);
+                            try { (window as any).__micVAD = { rms, ts: Date.now() } } catch { }
+                        };
+                        // ~30fps
+                        vadTimerRef.current = window.setInterval(tick, 33);
+                    } catch (e) {
+                        // ignore VAD init errors
+                    }
+
+                    // Start recognition immediately to always capture 'me' transcript
+                    try { recognitionRef.current.start(); } catch { }
                 } else {
                     setError('Speech recognition not supported in this browser');
                 }
@@ -112,7 +145,7 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
         // Cleanup function
         return () => {
             if (recognitionRef.current) {
-                recognitionRef.current.stop();
+                try { recognitionRef.current.stop(); } catch { }
             }
             if (streamRef.current) {
                 streamRef.current.getTracks().forEach(track => track.stop());
@@ -121,21 +154,25 @@ export const useMicrophone = ({ onQuestionDetected }: UseMicrophoneOptions) => {
                 silentAudioRef.current.pause();
                 silentAudioRef.current.srcObject = null;
             }
+            if (vadTimerRef.current) {
+                window.clearInterval(vadTimerRef.current);
+                vadTimerRef.current = null;
+            }
+            try {
+                sourceRef.current?.disconnect();
+                analyserRef.current?.disconnect();
+                audioCtxRef.current?.close();
+            } catch { }
+            sourceRef.current = null;
+            analyserRef.current = null;
+            audioCtxRef.current = null;
         };
     }, [onQuestionDetected]);
 
-    // Control speech recognition listening
+    // Keep recognition always running for transcript; this effect only exists to attempt a start when toggled on
     useEffect(() => {
-        try {
-            if (recognitionRef.current) {
-                if (isListening) {
-                    recognitionRef.current.start();
-                } else {
-                    recognitionRef.current.stop();
-                }
-            }
-        } catch (error) {
-            console.log('Error starting/stopping speech recognition:', error);
+        if (isListening && recognitionRef.current) {
+            try { recognitionRef.current.start(); } catch { }
         }
     }, [isListening]);
 
