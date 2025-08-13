@@ -13,6 +13,7 @@ import LiveTranscript from './LiveTranscript';
 import useDeepgramLive from '../hooks/useDeepgramLive';
 import useTranscriptBuffer from '../hooks/useTranscriptBuffer';
 import { isQuestion } from '../utils/questionDetection';
+import createAudioAttribution from '../utils/audioAttribution';
 import ConversationHistory from './ConversationHistory';
 
 export default function InterviewDashboard() {
@@ -60,13 +61,20 @@ export default function InterviewDashboard() {
     // Track last 'them' finalized text to suppress duplicate 'me' lines when sharing
     const lastThemFinalRef = useRef<{ text: string; at: number } | null>(null);
     const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+    // Middleware for consistent speaker attribution
+    const attribution = createAudioAttribution({
+        isSystemActive: () => !!systemStream,
+        systemBiasMs: 500,
+        vadThreshold: 0.06,
+    });
 
     // Single Deepgram live session for system/tab audio → 'them'
     useDeepgramLive({
         stream: systemStream || null,
         enabled: !!systemStream,
         onTranscript: ({ text, isFinal }) => {
-            upsertTranscript({ speaker: 'them', text, isFinal });
+            const { speaker } = attribution.classifySystem();
+            upsertTranscript({ speaker, text, isFinal });
             if (isFinal) {
                 lastThemFinalRef.current = { text: normalize(text), at: Date.now() };
                 if (isQuestion(text)) {
@@ -82,16 +90,19 @@ export default function InterviewDashboard() {
     useEffect(() => {
         const micLive = (window as any).__micLive as { text: string; isFinal: boolean } | undefined;
         if (!micLive || !micLive.text) return;
-        // When sharing tab/system audio, avoid duplicating the same phrase as 'me'
+        const vad = (window as any).__micVAD as { rms: number; ts: number } | undefined;
+        const { accept, speaker } = attribution.classifyMic({ isFinal: micLive.isFinal, rms: vad?.rms ?? 0 });
+        if (!accept) return;
+        // Additional dedupe against very recent them finals to avoid echo artifacts
         if (isSharing && micLive.isFinal && lastThemFinalRef.current) {
             const now = Date.now();
-            const withinWindow = now - lastThemFinalRef.current.at < 8000; // 8s dedupe window
+            const withinWindow = now - lastThemFinalRef.current.at < 6000;
             const micNorm = normalize(micLive.text);
             const themNorm = lastThemFinalRef.current.text;
             const isDuplicate = withinWindow && (micNorm === themNorm || micNorm.includes(themNorm) || themNorm.includes(micNorm));
             if (isDuplicate) return;
         }
-        upsertTranscript({ speaker: 'me', text: micLive.text, isFinal: micLive.isFinal });
+        upsertTranscript({ speaker, text: micLive.text, isFinal: micLive.isFinal });
     });
 
     const handleResponseGenerated = useCallback((response: string) => {
