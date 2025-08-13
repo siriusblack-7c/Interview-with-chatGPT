@@ -57,6 +57,9 @@ export default function InterviewDashboard() {
 
     // Live transcript buffered (dedup interim vs final)
     const { segments, upsertTranscript } = useTranscriptBuffer();
+    // Track last 'them' finalized text to suppress duplicate 'me' lines when sharing
+    const lastThemFinalRef = useRef<{ text: string; at: number } | null>(null);
+    const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
 
     // Single Deepgram live session for system/tab audio → 'them'
     useDeepgramLive({
@@ -64,21 +67,29 @@ export default function InterviewDashboard() {
         enabled: !!systemStream,
         onTranscript: ({ text, isFinal }) => {
             upsertTranscript({ speaker: 'them', text, isFinal });
-            if (isFinal && isQuestion(text)) {
-                setCurrentQuestion(text);
-                addQuestion(text);
+            if (isFinal) {
+                lastThemFinalRef.current = { text: normalize(text), at: Date.now() };
+                if (isQuestion(text)) {
+                    setCurrentQuestion(text);
+                    addQuestion(text);
+                }
             }
         },
     });
 
+    // Use Web Speech API output for 'me' to avoid needing a second Deepgram session
+    // Push microphone interim/final to live transcript for fast local display
     useEffect(() => {
         const micLive = (window as any).__micLive as { text: string; isFinal: boolean } | undefined;
         if (!micLive || !micLive.text) return;
-        // If system audio is active, require strong speech signal before showing 'me'
-        if (systemStream) {
-            const vad = (window as any).__micVAD as { rms: number; ts: number } | undefined;
-            if (!micLive.isFinal) return; // interims off when sharing
-            if (!vad || vad.rms < 0.06) return; // gate weak loopback noise
+        // When sharing tab/system audio, avoid duplicating the same phrase as 'me'
+        if (isSharing && micLive.isFinal && lastThemFinalRef.current) {
+            const now = Date.now();
+            const withinWindow = now - lastThemFinalRef.current.at < 8000; // 8s dedupe window
+            const micNorm = normalize(micLive.text);
+            const themNorm = lastThemFinalRef.current.text;
+            const isDuplicate = withinWindow && (micNorm === themNorm || micNorm.includes(themNorm) || themNorm.includes(micNorm));
+            if (isDuplicate) return;
         }
         upsertTranscript({ speaker: 'me', text: micLive.text, isFinal: micLive.isFinal });
     });
