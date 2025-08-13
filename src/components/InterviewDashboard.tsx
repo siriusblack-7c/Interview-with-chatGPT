@@ -71,9 +71,8 @@ export default function InterviewDashboard() {
         },
     });
 
-    // Use Web Speech API output for 'me' to avoid needing a second Deepgram session
-    // Push microphone interim/final to live transcript for fast local display
     useEffect(() => {
+        if (systemStream) return;
         const micLive = (window as any).__micLive as { text: string; isFinal: boolean } | undefined;
         if (!micLive || !micLive.text) return;
         upsertTranscript({ speaker: 'me', text: micLive.text, isFinal: micLive.isFinal });
