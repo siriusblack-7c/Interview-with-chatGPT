@@ -27,6 +27,7 @@ export default function InterviewDashboard() {
     const [additionalContext, setAdditionalContext] = useState('');
 
     const textToSpeechRef = useRef<TextToSpeechRef>(null);
+    const shareVideoRef = useRef<HTMLVideoElement>(null);
 
     // Custom hooks
     const { addQuestion, addResponse, conversations, clearHistory } = useConversation();
@@ -55,6 +56,35 @@ export default function InterviewDashboard() {
             textToSpeechRef.current.setMuted(true);
         }
     }, [isSharing]);
+
+    // Bind the screen share media stream to the preview video element
+    useEffect(() => {
+        const video = shareVideoRef.current;
+        if (!video) return;
+        if (systemStream) {
+            try {
+                (video as any).srcObject = systemStream;
+                const attemptPlay = () => {
+                    setTimeout(() => {
+                        video.play().catch(() => { /* ignore */ });
+                    }, 0);
+                };
+                if (video.readyState >= 2) attemptPlay();
+                else video.onloadedmetadata = attemptPlay;
+            } catch {
+                // no-op
+            }
+        } else {
+            try {
+                (video as any).srcObject = null;
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+            } catch {
+                // no-op
+            }
+        }
+    }, [systemStream]);
 
     // Live transcript buffered (dedup interim vs final)
     const { segments, upsertTranscript } = useTranscriptBuffer();
@@ -178,6 +208,28 @@ export default function InterviewDashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Column */}
                     <div className="space-y-6">
+                        {/* Screen Share Preview (shown on top of voice input box while sharing) */}
+                        {isSharing && (
+                            <div className="bg-[#0f0f0f] border border-gray-700 rounded-md overflow-hidden">
+                                <div className="px-3 py-2 text-xs text-gray-300 bg-[#0a0a0a] border-b border-gray-700">
+                                    Screen Share Preview
+                                </div>
+                                <div className="relative">
+                                    <video
+                                        ref={shareVideoRef}
+                                        className="w-full max-h-64 object-contain bg-black"
+                                        autoPlay
+                                        muted
+                                        playsInline
+                                    />
+                                    {(!systemStream || systemStream.getVideoTracks().length === 0) && (
+                                        <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-300 bg-black/60">
+                                            No video in shared stream. Select a Tab or Window (and enable "Share audio") in the picker.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                         {/* Speech Recognition */}
                         <SpeechRecognition
                             isListening={isListening}

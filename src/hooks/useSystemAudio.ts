@@ -41,16 +41,27 @@ export const useSystemAudio = ({ onQuestionDetected }: UseSystemAudioOptions) =>
                 throw lastErr || new Error('Could not start system audio capture');
             }
 
-            // Some share targets may not include audio unless user checks "Share audio"
+            // Ensure audio is present; if not, surface a helpful message but keep the stream so preview can show
             const audioTracks = stream.getAudioTracks();
             if (audioTracks.length === 0) {
-                // Clean up the video track
-                stream.getVideoTracks().forEach(t => t.stop());
-                throw new Error('No audio track in the shared stream. Share a tab/window and enable "Share audio".');
+                console.warn('No audio track in the shared stream. Share a tab/window and enable "Share audio".');
             }
 
-            // We do not need video; stop it if present
-            stream.getVideoTracks().forEach(t => t.stop());
+            // Keep a lightweight video track for on-screen preview
+            const videoTracks = stream.getVideoTracks();
+            if (videoTracks.length > 0) {
+                try {
+                    const vt = videoTracks[0];
+                    // Lower the preview overhead
+                    vt.applyConstraints({
+                        width: { ideal: 640, max: 1280 },
+                        height: { ideal: 360, max: 720 },
+                        frameRate: { ideal: 10, max: 15 },
+                    } as MediaTrackConstraints).catch(() => { /* ignore */ });
+                } catch (_) {
+                    // ignore
+                }
+            }
 
             streamRef.current = stream;
             setIsSharing(true);
