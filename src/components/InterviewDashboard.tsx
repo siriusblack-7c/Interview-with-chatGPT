@@ -72,9 +72,9 @@ export default function InterviewDashboard() {
     });
 
     useEffect(() => {
-        if (systemStream) return;
         const micLive = (window as any).__micLive as { text: string; isFinal: boolean } | undefined;
         if (!micLive || !micLive.text) return;
+        if (systemStream && !micLive.isFinal) return; // when sharing, only accept final mic lines
         upsertTranscript({ speaker: 'me', text: micLive.text, isFinal: micLive.isFinal });
     });
 
