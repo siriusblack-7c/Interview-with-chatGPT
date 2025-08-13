@@ -10,7 +10,6 @@ export interface CreateAudioAttributionOptions {
     isSystemActive: () => boolean
     // Optional: time window (ms) that biases toward 'them' right after a system utterance
     systemBiasMs?: number
-    // Optional: VAD threshold for mic classification while system is active
     vadThreshold?: number
 }
 
