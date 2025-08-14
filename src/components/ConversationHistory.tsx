@@ -35,7 +35,7 @@ export default function ConversationHistory({ conversations, onClearHistory }: C
     const visibleItems = conversations;
 
     return (
-        <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6 h-[calc(100vh-350px)] flex flex-col">
+        <div className="bg-[#2c2c2c] rounded-md shadow-lg border border-gray-500 p-6 h-[400px] flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-green-600" />
